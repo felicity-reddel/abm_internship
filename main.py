@@ -1,16 +1,21 @@
-# This is a sample Python script.
 
-# Press ⇧F10 to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}. How are you?')  # Press ⌘F8 to toggle the breakpoint.
+from Model import MisinfoModel, draw_graph
+import matplotlib.pyplot as plt
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+# setup model
+model = MisinfoModel(10)
+draw_graph(model.G)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+# run model
+for i in range(10):
+    model.step()
+
+# plot results
+agent_vaccination_willingness = [a.vaccination_willingness for a in model.schedule.agents]
+plt.hist(agent_vaccination_willingness)
+plt.xlabel("vaccination willingness")
+plt.ylabel("number of agents")
+plt.show()
