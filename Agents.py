@@ -9,36 +9,50 @@ class BaseAgent(Agent):
 
         # vaccination_willingness: between 0 and 100 [%]
         self.vaccination_willingness = self.random.randint(0, 100)
+        self.neighbors = self.get_neighbors()  # Need to assign neighbors when all agents are already setup
 
     def step(self):
-        self.toy_interaction()
+        # self.toy_interaction()
+        self.adjust_to_average()
 
-    # Later: More realistic interation. Adjust way of interaction.
-    #       Interact with all neighbors – expose them to your memes, update beliefs.
+    # Later: More realistic interaction. Adjust way of interaction.
+    # Challenge: everyone needs to update. But they should all do so using the *previous* beliefs of each-other.
+    # Such that the order of who updates first is not relevant. How to do that?
 
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    #   Toy Interaction
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #  Interaction: many-on-1, average-based update
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+    def adjust_to_average(self):
+        # Get neighbors' beliefs
+        self.neighbors = self.get_neighbors() # to make sure the neighbors are uptodate
+        neighbors_beliefs = [neighbor.vaccination_willingness for neighbor in self.neighbors]
+
+        # Update own belief towards average neighbor-belief
+        avg_neighbor_belief = sum(neighbors_beliefs)/len(neighbors_beliefs)
+        self.vaccination_willingness = (self.vaccination_willingness + avg_neighbor_belief)/2
+
+    # Lesson from adjust_to_average:
+    # - Outcome strongly depends on intial conditions, i.e., initial belief distribution (randomly sampled here).
+    #   Either all/most agents get the vaccine or all/most don't. Moderate values.
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   Toy Interaction: 1-on-1, certainty-based update
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def toy_interaction(self):
         """ Toy interaction step method.
         An agent only interacts with one randomly selected neighbor.
-        The agent who was less certain updates very strongly towards the more certain agent's belief. """
+        The agent who was less certain updates very strongly towards the more certain agent's belief.
+        The agent who was more certain becomes even a bit more certain (due to the strong update of the other agent)."""
 
-        # Pick neighbor & determine who is more certain
-        other_agent = self.toy_pick_neighbor()
+        # Pick neighbor
+        neighbors = self.get_neighbors()
+        other_agent = self.random.choice(neighbors)
+        # Determine who is more certain
         more_certain_agent, less_certain_agent = self.toy_get_more_certain_agent(other_agent)
         # Update beliefs accordingly
         self.toy_update_beliefs(more_certain_agent, less_certain_agent)
-
-    def toy_pick_neighbor(self):
-        """ For toy_interaction. Pick random neighbor and return it. """
-        # Pick neighbor to interact with
-        neighbor_nodes = self.model.network.get_neighbors(self.unique_id)
-        other_agents_node = self.random.choice(neighbor_nodes)
-        other_agent = self.model.network.get_cell_list_contents([other_agents_node])[
-            0]  # [0]: idx of only agent on node
-        return other_agent
 
     def toy_get_more_certain_agent(self, other_agent):
         """ For toy_interaction. Determine which agent is more/less certain and return them. """
@@ -72,8 +86,8 @@ class BaseAgent(Agent):
 
     # Lesson from Toy:
     # - Outcome strongly depends on intial conditions, i.e., initial belief distribution (randomly sampled here).
-    #   Either all/most agents get the vaccine or all/most don't.
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   Either all/most agents get the vaccine or all/most don't. Very extreme values.
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def print_vax_decision(self, threshold=50.0):
         """
@@ -88,17 +102,20 @@ class BaseAgent(Agent):
         print("Agent " + str(self.unique_id) + ": " + str(self.vaccination_willingness)
               + " --> " + decision)
 
-    # Not sure whether the below fn is needed.
-    # def update_belief(self, new_value=50):
-    #     """Updates own (vaccination_willingness) belief to provided new value.
-    #
-    #
-    #     Disclaimer: This function should later be replaced with the below extension.
-    #                 But currently: doesn't know 'self'.
-    #     """
-    #     self.vaccination_willingness = new_value
+    def get_neighbors(self, node=None):
+        """
+        Returns all neighbors of a node. If no specific node is provided, the own neighbors are returned.
+        :return:    list of agents in neighboring nodes
+        """
 
-    # EXTENSION: When multiple beliefs
-    # def update_belief(self, belief=self.vaccination_willingness, new_value=50):
-    #     self.vaccination_willingness = new_value
-    #     pass
+        # Get neighboring nodes
+        if not node:  # If no node provided, get own neighbors.
+            neighbor_nodes = self.model.network.get_neighbors(self.unique_id)
+        else:
+            neighbor_nodes = self.model.network.get_neighbors(node.unique_id)
+
+        # Get agents from neighboring nodes
+        neighbor_agents = [self.model.network.get_cell_list_contents([node]) for node in neighbor_nodes]
+        neighbor_agents = sum(neighbor_agents, [])  # Flatten the list
+
+        return neighbor_agents
