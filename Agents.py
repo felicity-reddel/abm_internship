@@ -9,19 +9,56 @@ class BaseAgent(Agent):
         super().__init__(unique_id, model)
 
         self.beliefs = {}
+        self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
         self.init_beliefs()
         self.neighbors = self.get_neighbors()  # Need to assign neighbors when all agents are already setup
+        self.will_post = True if random.random() < self.tendency_to_share else False
+        self.received_posts = []
 
-    def step(self):
-        self.toy_interaction()
-        # self.toy_adjust_to_average()
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   Step function: in two Stages.
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-        # Testing
-        # post = self.create_post(based_on_beliefs=True)
+    def share_post_stage(self):
 
-    # Later: More realistic interaction. Adjust way of interaction.
-    # Challenge: everyone needs to update. But they should all do so using the *previous* stances of each-other.
-    # Such that the order of who updates first is not relevant. How to do that?
+        # Decide whether to post
+        will_post = True if random.random() < self.tendency_to_share else False
+        print(f"Agent_{self.unique_id} will share a post: {will_post}")
+
+        # Create post & share
+        if will_post:
+            post = self.create_post()
+
+            # Share post to neighbors
+            for neighbor in self.get_neighbors():
+                neighbor.received_posts.append(post)
+
+    def update_beliefs_stage(self):
+        print(f"Agent_{self.unique_id} updates beliefs.")
+        if len(self.received_posts) > 0:
+
+            # Do the update
+            self.update_beliefs_avg()
+
+        # empty self.received_posts again
+        self.received_posts = []
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   General Helper-Functions
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+    def update_beliefs_avg(self):
+        """
+        Simplest update_beliefs function. Based on received posts in this step/tick.
+        New belief is average between own previous belief and the post's stance on the topic.
+        """
+
+        for post in self.received_posts:
+
+            # Update towards post's stances
+            for topic, value in post.stances.items():
+                prev_belief = self.beliefs[topic]
+                self.beliefs[topic] = (prev_belief + value) / 2
 
     def init_beliefs(self):
         """
@@ -47,10 +84,6 @@ class BaseAgent(Agent):
         post = Post(id, stances)
 
         return post
-
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    #   General Helper-Functions
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def print_vax_decision(self, threshold=50.0):
         """

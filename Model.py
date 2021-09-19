@@ -1,7 +1,7 @@
 import random
 
 from mesa import Model
-from mesa.time import RandomActivation
+from mesa.time import StagedActivation
 from mesa.space import NetworkGrid
 from Agents import *
 from Posts import *
@@ -15,7 +15,7 @@ class MisinfoModel(Model):
     def __init__(self, n_agents, n_edges=3, n_posts=10):
         super().__init__()
         self.n_agents = n_agents
-        self.schedule = RandomActivation(self)
+        self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
         self.graph = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
         self.network = NetworkGrid(self.graph)
         # Later: What need graph for what other than drawing graph?
@@ -31,6 +31,9 @@ class MisinfoModel(Model):
         for node in self.graph.nodes:
             agent = self.schedule.agents[node]
             self.network.place_agent(agent, node)
+
+        # TODO: Make sure all neighbors are properly saved
+        # update_neighbors()
 
     def step(self):
         """Advance the model by one step."""
