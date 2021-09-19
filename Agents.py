@@ -14,7 +14,7 @@ class BaseAgent(Agent):
 
     def step(self):
         self.toy_interaction()
-        # self.adjust_to_average()
+        # self.toy_adjust_to_average()
 
         # Testing
         # post = self.create_post(based_on_beliefs=True)
@@ -65,7 +65,7 @@ class BaseAgent(Agent):
         print("Agent " + str(self.unique_id) + ": " + str(self.beliefs[Topic.VAX])
               + " --> " + decision)
 
-    def get_neighbors(self, node=None):
+    def get_neighbors(self, node=None) -> list:
         """
         Returns all neighbors of a node. If no specific node is provided, the own neighbors are returned.
         :return:    list of agents in neighboring nodes
@@ -97,11 +97,11 @@ class BaseAgent(Agent):
         neighbors = self.get_neighbors()
         other_agent = self.random.choice(neighbors)
         # Determine who is more certain
-        more_certain_agent, less_certain_agent = self.toy_get_more_certain_agent(other_agent)
+        more_certain_agent, less_certain_agent = self.get_more_certain_agent(other_agent)
         # Update stances accordingly
         self.toy_update_beliefs(more_certain_agent, less_certain_agent)
 
-    def toy_get_more_certain_agent(self, other_agent):
+    def get_more_certain_agent(self, other_agent):
         """ For toy_interaction. Determine which agent is more/less certain and return them. """
         # Determine which agent was more certain
         # more certain --> further away from middle (i.e., from 50)
@@ -140,7 +140,7 @@ class BaseAgent(Agent):
     #  Toy Interaction: Many-on-1, Average-based update. Without Posts.
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-    def adjust_to_average(self):
+    def toy_adjust_to_average(self):
         # Get neighbors' stances
         self.neighbors = self.get_neighbors()  # to make sure the neighbors are uptodate
         neighbors_beliefs = [neighbor.beliefs[Topic.VAX] for neighbor in self.neighbors]
@@ -149,6 +149,6 @@ class BaseAgent(Agent):
         avg_neighbor_belief = sum(neighbors_beliefs) / len(neighbors_beliefs)
         self.beliefs[Topic.VAX] = (self.beliefs[Topic.VAX] + avg_neighbor_belief) / 2
 
-    # Lesson from adjust_to_average:
+    # Lesson from toy_adjust_to_average:
     # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
     #   Either all/most agents get the vaccine or all/most don't. Moderate values.

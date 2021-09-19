@@ -5,10 +5,10 @@ from scipy.stats import skewnorm
 
 class Post:
 
-    def __init__(self, unique_id, stances={}, fact_check_result=False):
+    def __init__(self, unique_id, stances={}, factcheck_result=False):
         self.unique_id = unique_id
         self.stances = stances  # stances represented in the post
-        # self.fact_check_result = fact_check_result
+        # self.factcheck_result = factcheck_result
 
     @staticmethod
     def sample_stances(max_n_topics=1, based_on_agent=None, skew=4) -> dict:

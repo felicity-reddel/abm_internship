@@ -14,7 +14,7 @@ class MisinfoModel(Model):
 
     def __init__(self, n_agents, n_edges=3, n_posts=10):
         super().__init__()
-        self.num_agents = n_agents
+        self.n_agents = n_agents
         self.schedule = RandomActivation(self)
         self.graph = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
         self.network = NetworkGrid(self.graph)
@@ -23,7 +23,7 @@ class MisinfoModel(Model):
         self.post_id_counter = 0
 
         # Create agents
-        for i in range(self.num_agents):
+        for i in range(self.n_agents):
             a = BaseAgent(i, self)
             self.schedule.add(a)
 
