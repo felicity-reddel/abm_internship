@@ -1,7 +1,10 @@
+import random
+
 from mesa import Model
 from mesa.time import RandomActivation
 from mesa.space import NetworkGrid
 from Agents import *
+from Posts import *
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -9,7 +12,7 @@ import matplotlib.pyplot as plt
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=3):
+    def __init__(self, n_agents, n_edges=3, n_posts=10):
         super().__init__()
         self.num_agents = n_agents
         self.schedule = RandomActivation(self)
@@ -17,6 +20,8 @@ class MisinfoModel(Model):
         self.network = NetworkGrid(self.graph)
         # Later: What need graph for what other than drawing graph?
         #       If mesa can visualize network nicely, maybe don't need G as a model-attribute anymore.
+        self.post_id_counter = 0
+        self.posts = self.init_posts(n_posts)
 
         # Create agents
         for i in range(self.num_agents):
@@ -32,13 +37,57 @@ class MisinfoModel(Model):
         """Advance the model by one step."""
         self.schedule.step()
 
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   Posts Functions
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-#   Helper Functions
-# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    def init_posts(self, n_posts) -> list:
+        """
+        Initializes the posts.
+        :rtype: list
+        :param n_posts:
+        :return: list of initial posts
+        """
 
-def toy_graph():
-    """ Generate and return simple toy-graph of 4 nodes."""
+        # Generate posts
+        posts = []
+        for i in range(n_posts):
+            messages = sample_messages()
+            post = Post(unique_id=i, messages=messages)
+            posts += post
+
+        # Update model's post_id_counter
+        self.post_id_counter += n_posts
+
+        return posts
+
+
+def sample_messages(max_n_messages=1) -> dict:
+    """
+    Generates messages. Each message consists of a topic and the post's stance on it. {Topic.TOPIC1: int}
+    :rtype: dict
+    :return: dict of messages.
+    """
+    # Sample how many messages should be included in post. By default 1 message per post.
+    n_messages = random.randint(1, max_n_messages)  # Ext: could sample how many messages should be included in post
+
+    # Sample messages
+    messages = {}
+    for m in range(n_messages):
+        topics = [topic for topic in Topic]
+        topic = random.choice(topics)  # Ext: could adjust weights for diff. topics
+        stance = random.randint(0, 100)
+        messages[topic] = stance
+
+    return messages
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   Graph Functions
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+
+def toy_graph() -> nx.Graph:
+    """ Generates and returns simple toy-graph of 4 nodes."""
     # Simple graph to test compatibility
     graph = nx.Graph()
     graph.add_nodes_from([0, 1, 2, 3])
@@ -47,7 +96,7 @@ def toy_graph():
     return graph
 
 
-def random_graph(n_nodes, m, seed=None):
+def random_graph(n_nodes, m, seed=None) -> nx.Graph:
     """ Generate and return a random graph via networkx.
 
     Keyword arguments:

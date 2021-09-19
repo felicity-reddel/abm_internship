@@ -33,7 +33,7 @@ class BaseAgent(Agent):
         self.vaccination_willingness = (self.vaccination_willingness + avg_neighbor_belief)/2
 
     # Lesson from adjust_to_average:
-    # - Outcome strongly depends on intial conditions, i.e., initial belief distribution (randomly sampled here).
+    # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
     #   Either all/most agents get the vaccine or all/most don't. Moderate values.
 
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
@@ -87,6 +87,9 @@ class BaseAgent(Agent):
     # Lesson from Toy:
     # - Outcome strongly depends on intial conditions, i.e., initial belief distribution (randomly sampled here).
     #   Either all/most agents get the vaccine or all/most don't. Very extreme values.
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   General helper-functions
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def print_vax_decision(self, threshold=50.0):
