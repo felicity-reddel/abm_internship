@@ -32,8 +32,9 @@ class MisinfoModel(Model):
             agent = self.schedule.agents[node]
             self.network.place_agent(agent, node)
 
-        # TODO: Make sure all neighbors are properly saved
-        # update_neighbors()
+        # Init neighbors (after all agents have been set up)
+        for agent in self.schedule.agents:
+            agent.neighbors = agent.get_neighbors()
 
     def step(self):
         """Advance the model by one step."""

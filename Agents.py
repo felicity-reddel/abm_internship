@@ -11,7 +11,7 @@ class BaseAgent(Agent):
         self.beliefs = {}
         self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
         self.init_beliefs()
-        self.neighbors = self.get_neighbors()  # Need to assign neighbors when all agents are already setup
+        self.neighbors = []
         self.will_post = True if random.random() < self.tendency_to_share else False
         self.received_posts = []
 
@@ -23,7 +23,7 @@ class BaseAgent(Agent):
 
         # Decide whether to post
         will_post = True if random.random() < self.tendency_to_share else False
-        print(f"Agent_{self.unique_id} will share a post: {will_post}")
+        # print(f"Agent_{self.unique_id} will share a post: {will_post}")
 
         # Create post & share
         if will_post:
@@ -34,7 +34,7 @@ class BaseAgent(Agent):
                 neighbor.received_posts.append(post)
 
     def update_beliefs_stage(self):
-        print(f"Agent_{self.unique_id} updates beliefs.")
+        # print(f"Agent_{self.unique_id} updates beliefs.")
         if len(self.received_posts) > 0:
 
             # Do the update

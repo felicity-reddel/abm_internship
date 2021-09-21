@@ -8,10 +8,10 @@ from Posts import *
 
 # setup model
 model = MisinfoModel(10)
-# draw_graph(model.graph)
+draw_graph(model.graph)
 
 # run model
-for i in range(10):
+for i in range(3):
     model.step()
 
 # # plot results
