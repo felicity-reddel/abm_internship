@@ -12,13 +12,18 @@ import matplotlib.pyplot as plt
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=3, n_posts=10):
+    def __init__(self, n_agents, n_edges=1, n_posts=10):
         super().__init__()
         self.n_agents = n_agents
         self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
-        self.graph = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
-        self.network = NetworkGrid(self.graph)
-        # Later: What need graph for what other than drawing graph?
+        self.G = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
+        self.network = NetworkGrid(self.G)
+        # TODO: For some reason, the visualization needs model.network.
+        #       (Insight: because of render-fn:
+        #       https://mesa.readthedocs.io/en/stable/_modules/mesa/visualization/modules/NetworkVisualization.html#NetworkModule.render)
+        #       Thus, I renamed self.network --> self.network. (also in Agents.py 109 etc.)
+        #       "Works" the same: without error, without actually showing anything.
+        # Later: What need G for what other than drawing G?
         #       If mesa can visualize network nicely, maybe don't need G as a model-attribute anymore.
         self.post_id_counter = 0
 
@@ -28,7 +33,7 @@ class MisinfoModel(Model):
             self.schedule.add(a)
 
         # Place each agent in its node
-        for node in self.graph.nodes:
+        for node in self.G.nodes:
             agent = self.schedule.agents[node]
             self.network.place_agent(agent, node)
 
@@ -46,24 +51,24 @@ class MisinfoModel(Model):
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 def toy_graph() -> nx.Graph:
-    """ Generates and returns simple toy-graph of 4 nodes."""
-    # Simple graph to test compatibility
+    """ Generates and returns simple toy-G of 4 nodes."""
+    # Simple G to test compatibility
     graph = nx.Graph()
     graph.add_nodes_from([0, 1, 2, 3])
     graph.add_edges_from([(0, 1), (0, 2), (0, 3)])
-    print(f"graph's nodes: \n {str(graph[0])}, \n {str(graph[1])}, \n {str(graph[2])}, \n {str(graph[3])}")
+    print(f"G's nodes: \n {str(graph[0])}, \n {str(graph[1])}, \n {str(graph[2])}, \n {str(graph[3])}")
     return graph
 
 
 def random_graph(n_nodes, m, seed=None) -> nx.Graph:
-    """ Generate and return a random graph via networkx.
+    """ Generate and return a random G via networkx.
 
     Keyword arguments:
     n -- number of nodes
     m -- number of edges added per node
 
     Return:
-    G -- stochastic graph (barabasi albert graph)
+    G -- stochastic G (barabasi albert G)
 
     # Later: Potential extension: parameter for skew of node degree.
     # Note: Using Barabasi Albert graphs, because they are fitting for social networks.
@@ -75,7 +80,7 @@ def random_graph(n_nodes, m, seed=None) -> nx.Graph:
 
 
 def draw_graph(graph):
-    """ Draw graph G with specified options."""
+    """ Draw G G with specified options."""
     size = 4
     options = {
         'node_color': 'lightgray',
