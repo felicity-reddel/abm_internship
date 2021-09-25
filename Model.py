@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=1, n_posts=10):
+    def __init__(self, n_agents, n_edges=2, n_posts=10):
         super().__init__()
         self.n_agents = n_agents
         self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
