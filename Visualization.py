@@ -23,17 +23,15 @@ def show_visualization(model):
         # The model ensures there is always 1 agent per node
 
         # def get_agents(source, target):
-        #     return network.nodes[source]['agent'][0], network.nodes[target]['agent'][0]
+        #     return grid.nodes[source]['agent'][0], grid.nodes[target]['agent'][0]
 
         portrayal = dict()
-        portrayal['nodes'] = [{'Shape': "circle",
-                               'color': "blue",
+        portrayal['nodes'] = [{"shape": "circle",
+                               "color": "blue",  # Later: update_color(agent)
                                "size": 5,
-                               'tooltip': f"id: {node}"  # ,
-                               # 'label': node  # self-added attempt --> no error, no label.
-                               # TODO: only uses G, cannot use network instead?
+                               "tooltip": f"id: {id}",
                                }
-                              for node in G.nodes]
+                              for (id, agent) in G.nodes.data("agent")]
 
         portrayal['edges'] = [{'source': source,
                                'target': target,
@@ -46,10 +44,10 @@ def show_visualization(model):
 
     network = NetworkModule(network_portrayal, 500, 500, library='d3')
 
-    server = ModularServer(model,               # class name
-                           [network],           # network
-                           'Misinfo Model',     # title
-                           {'n_agents': 10})    # model parameters
+    server = ModularServer(model,  # class name
+                           [network],  # grid
+                           'Misinfo Model',  # title
+                           {'n_agents': 10})  # model parameters
 
     server.port = 8521  # The default
     server.launch()

@@ -17,14 +17,7 @@ class MisinfoModel(Model):
         self.n_agents = n_agents
         self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
         self.G = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
-        self.network = NetworkGrid(self.G)
-        # TODO: For some reason, the visualization needs model.network.
-        #       (Insight: because of render-fn:
-        #       https://mesa.readthedocs.io/en/stable/_modules/mesa/visualization/modules/NetworkVisualization.html#NetworkModule.render)
-        #       Thus, I renamed self.network --> self.network. (also in Agents.py 109 etc.)
-        #       "Works" the same: without error, without actually showing anything.
-        # Later: What need G for what other than drawing G?
-        #       If mesa can visualize network nicely, maybe don't need G as a model-attribute anymore.
+        self.grid = NetworkGrid(self.G)
         self.post_id_counter = 0
 
         # Create agents
@@ -32,10 +25,15 @@ class MisinfoModel(Model):
             a = BaseAgent(i, self)
             self.schedule.add(a)
 
-        # Place each agent in its node
-        for node in self.G.nodes:
+        # Place each agent in its node. (& save node_position into agent)
+        for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
             agent = self.schedule.agents[node]
-            self.network.place_agent(agent, node)
+
+            # save node_position into agent
+            self.grid.place_agent(agent, node)
+
+            # add agent to node
+            self.G.nodes[node]['agent'] = agent
 
         # Init neighbors (after all agents have been set up)
         for agent in self.schedule.agents:
@@ -53,7 +51,7 @@ class MisinfoModel(Model):
 def toy_graph() -> nx.Graph:
     """ Generates and returns simple toy-G of 4 nodes."""
     # Simple G to test compatibility
-    graph = nx.Graph()
+    graph = nx.Graph()  # Later: potentially adjust in style to later code. i.e., self.G
     graph.add_nodes_from([0, 1, 2, 3])
     graph.add_edges_from([(0, 1), (0, 2), (0, 3)])
     print(f"G's nodes: \n {str(graph[0])}, \n {str(graph[1])}, \n {str(graph[2])}, \n {str(graph[3])}")

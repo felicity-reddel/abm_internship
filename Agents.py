@@ -98,21 +98,23 @@ class BaseAgent(Agent):
         print("Agent " + str(self.unique_id) + ": " + str(self.beliefs[Topic.VAX])
               + " --> " + decision)
 
-    def get_neighbors(self, node=None) -> list:
+    def get_neighbors(self, node=None) -> list:  # list of agents
         """
-        Returns all neighbors of a node. If no specific node is provided, the own neighbors are returned.
+        Returns all neighbor-agents of a node. If no specific node is provided, the own neighbors are returned.
         :return:    list of agents in neighboring nodes
         """
 
-        # Get neighboring nodes
+        # Get neighboring nodes  (i.e., list of their ids, integers)
         if not node:  # If no node provided, get own neighbors.
-            neighbor_nodes = self.model.network.get_neighbors(self.unique_id)
+            neighbor_nodes = self.model.grid.get_neighbors(self.unique_id)
         else:
-            neighbor_nodes = self.model.network.get_neighbors(node.unique_id)
+            neighbor_nodes = self.model.grid.get_neighbors(node)
 
         # Get agents from neighboring nodes
-        neighbor_agents = [self.model.network.get_cell_list_contents([node]) for node in neighbor_nodes]
-        neighbor_agents = sum(neighbor_agents, [])  # Flatten the list
+        neighbor_agents = []
+        for (_, agent) in self.model.G.nodes.data("agent"):
+            if agent.pos in neighbor_nodes:
+                neighbor_agents.append(agent)
 
         return neighbor_agents
 
