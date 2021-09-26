@@ -1,24 +1,28 @@
 import random
 
 from mesa import Model
+from mesa.datacollection import DataCollector
 from mesa.time import StagedActivation
 from mesa.space import NetworkGrid
 from Agents import *
 from Posts import *
 import networkx as nx
 import matplotlib.pyplot as plt
+from mesa.visualization.modules import ChartModule
+
 
 
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=2, n_posts=10):
+    def __init__(self, n_agents, n_edges=2):
         super().__init__()
         self.n_agents = n_agents
         self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
         self.G = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
         self.grid = NetworkGrid(self.G)
         self.post_id_counter = 0
+
 
         # Create agents
         for i in range(self.n_agents):
@@ -39,9 +43,78 @@ class MisinfoModel(Model):
         for agent in self.schedule.agents:
             agent.neighbors = agent.get_neighbors()
 
+        self.datacollector = DataCollector(model_reporters={
+            "Avg Vax-Belief": self.get_avg_VAX_belief,
+            # "Belief Category Sizes": self.get_VAX_category_sizes})
+            "Above Vax-Threshold (>=50.0)": self.get_above_VAX_threshold,
+            "Below Vax-Threshold (<50.0)": self.get_below_VAX_threshold})
+
     def step(self):
         """Advance the model by one step."""
         self.schedule.step()
+        self.datacollector.collect(self)
+
+
+    def get_avg_VAX_belief(self, weird_error_fix_parameter) -> float:  # if without dummy parameter: get error
+        """
+        Return average belief of all agents on a given topic. For the DataCollector.
+        :return:        float
+        """
+        topic = Topic.VAX
+
+        agent_beliefs = [a.beliefs[topic] for a in self.schedule.agents]
+        avg_belief = sum(agent_beliefs) / len(agent_beliefs)
+
+        return avg_belief
+
+    def get_VAX_category_sizes(self, weird_error_fix_parameter) -> tuple:
+        """
+        Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
+         For the DataCollector.
+        :param threshold:   float
+        :param topic:       Topic
+        :return:            tuple
+        """
+        topic = Topic.VAX
+        threshold = 50.0
+
+        agent_beliefs = [a.beliefs[topic] for a in self.schedule.agents]
+        n_above = sum([1 for a_belief in agent_beliefs if a_belief >= threshold])
+        n_below = len(agent_beliefs) - n_above
+
+        return n_above, n_below
+
+    def get_above_VAX_threshold(self, weird_error_fix_parameter) -> tuple:
+        """
+        Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
+         For the DataCollector.
+        :param threshold:   float
+        :param topic:       Topic
+        :return:            tuple
+        """
+        topic = Topic.VAX
+        threshold = 50.0
+
+        agent_beliefs = [a.beliefs[topic] for a in self.schedule.agents]
+        n_above = sum([1 for a_belief in agent_beliefs if a_belief >= threshold])
+
+        return n_above
+
+    def get_below_VAX_threshold(self, weird_error_fix_parameter) -> tuple:
+        """
+        Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
+         For the DataCollector.
+        :param threshold:   float
+        :param topic:       Topic
+        :return:            tuple
+        """
+        topic = Topic.VAX
+        threshold = 50.0
+
+        agent_beliefs = [a.beliefs[topic] for a in self.schedule.agents]
+        n_below = sum([1 for a_belief in agent_beliefs if a_belief < threshold])
+
+        return n_below
 
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––

@@ -36,11 +36,13 @@ def get_node_color(agent):
         if idx != 3:        # only adjust RGB, not transparency
             new_c_val.append(val*256)
     c_val = tuple(new_c_val)
-    print(f'c_val: {c_val}')
     return c_val
 
 
 def show_visualization(model):
+
+# chart = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"}], data_collector_name="datacollector")
+
 
     def network_portrayal(G):
         # The model ensures there is always 1 agent per node
@@ -50,9 +52,9 @@ def show_visualization(model):
 
         portrayal = dict()
         portrayal['nodes'] = [{"shape": "circle",
-                               "color": f'rgba({get_node_color(agent)[0]},{get_node_color(agent)[1]},{get_node_color(agent)[2]},1.0)',
+                               "color": f'rgb{get_node_color(agent)}',
                                "size": 5,
-                               "tooltip": f"id: {id}",
+                               "tooltip": f"belief: {round(agent.beliefs[Topic.VAX])}",
                                }
                               for (id, agent) in G.nodes.data("agent")]
 
@@ -66,11 +68,15 @@ def show_visualization(model):
         return portrayal
 
     network = NetworkModule(network_portrayal, 500, 500, library='d3')
+    chart = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"},
+                         {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
+                         {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"}],
+                        data_collector_name="datacollector")
 
     server = ModularServer(model,  # class name
-                           [network],  # grid
+                           [network, chart],
                            'Misinfo Model',  # title
-                           {'n_agents': 10})  # model parameters
+                           {'n_agents': 100})  # model parameters
 
     server.port = 8521  # The default
     server.launch()
