@@ -36,9 +36,9 @@ class BaseAgent(Agent):
     def update_beliefs_stage(self):
         # print(f"Agent_{self.unique_id} updates beliefs.")
         if len(self.received_posts) > 0:
-
             # Do the update
-            self.update_beliefs_avg()
+            # self.update_beliefs_avg()
+            self.update_beliefs_simple_sit()
 
         # empty self.received_posts again
         self.received_posts = []
@@ -59,6 +59,40 @@ class BaseAgent(Agent):
             for topic, value in post.stances.items():
                 prev_belief = self.beliefs[topic]
                 self.beliefs[topic] = (prev_belief + value) / 2
+
+    def update_beliefs_simple_sit(self):
+        # Prepare updates dict
+        updates = {}
+        for topic in Topic:
+            updates[topic] = 0
+
+        # Calculate updates for each post and topic
+        for post in self.received_posts:
+            for topic, post_value in post.stances.items():
+                prev_belief = self.beliefs[topic]
+
+                # Calculate SIT components
+                strength = 1  # relative n_followers, [0,100]
+                immediacy = 1  # social immediacy: weighted_avg(belief_similarity, tie_strength)
+                #                   belief_similarity: abs(own_belief–friend_belief), [0, 100]
+                #                   tie_strength: edge_weight between agent & friend, [0,100]
+                n_sources = 1  # relative n_following, [0,100]
+
+                # Combine components
+                social_impact = strength * immediacy * n_sources
+                direction = -1 if post_value < prev_belief else 1
+
+                update = social_impact * direction
+                updates[topic] += update
+
+        # Update own beliefs
+        for topic, update in updates.items():
+            self.beliefs[topic] += update
+
+    # Lesson from update_beliefs_simple_sit:
+    # - Takes a lot longer to converge.
+    # - Most agents end up with quite strong beliefs.
+    # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
 
     def init_beliefs(self):
         """
