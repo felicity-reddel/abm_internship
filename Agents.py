@@ -87,7 +87,9 @@ class BaseAgent(Agent):
 
         # Update own beliefs
         for topic, update in updates.items():
-            self.beliefs[topic] += update
+            prev_belief = self.beliefs[topic]
+            # Make sure belief stays in [0,100]-range
+            self.beliefs[topic] = max(0, min(100, prev_belief+update))
 
     # Lesson from update_beliefs_simple_sit:
     # - Takes a lot longer to converge.
