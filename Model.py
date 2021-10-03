@@ -128,7 +128,7 @@ def toy_graph() -> nx.Graph:
     return graph
 
 
-def random_graph(n_nodes, m, seed=None) -> nx.Graph:
+def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
     """ Generate and return a random G via networkx.
 
     Keyword arguments:
@@ -144,6 +144,9 @@ def random_graph(n_nodes, m, seed=None) -> nx.Graph:
     # FYI: n=10, m=3, doesn't create 30 edges, but only e.g., 21. Not each node has 3 edges.
     """
     graph = nx.barabasi_albert_graph(n_nodes, m, seed)
+    # Make graph directed (i.e., asymmetric edges possible)
+    if directed:
+        graph = nx.DiGraph(graph)  # shallow copy, because don't need two separate graphs
     return graph
 
 
