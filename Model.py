@@ -129,24 +129,35 @@ def toy_graph() -> nx.Graph:
 
 
 def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
-    """ Generate and return a random G via networkx.
+    """
 
-    Keyword arguments:
-    n -- number of nodes
-    m -- number of edges added per node
+    :param n_nodes:     int, number of nodes
+    :param m:           int, avg number of edges added per node
+    :param seed:        int, random seed
+    :param directed:    bool, undirected or directed graph
 
-    Return:
-    G -- stochastic G (barabasi albert G)
+    :return:            nx.Graph, the resulting stochastic graph (barabasi albert G)
 
-    # Later: Potential extension: parameter for skew of node degree.
-    # Note: Using Barabasi Albert graphs, because they are fitting for social networks.
-    #       ( https://en.wikipedia.org/wiki/Barab%C3%A1si%E2%80%93Albert_model )
-    # FYI: n=10, m=3, doesn't create 30 edges, but only e.g., 21. Not each node has 3 edges.
+    # Note:     Using Barabasi Albert graphs, because they are fitting for social networks.
+    #           ( https://en.wikipedia.org/wiki/Barab%C3%A1si%E2%80%93Albert_model )
+    # Later:    Potential extension: parameter for skew of node degree.
+    # FYI:      n=10, m=3, doesn't create 30 edges, but only e.g., 21. Not each node has 3 edges.
     """
     graph = nx.barabasi_albert_graph(n_nodes, m, seed)
+
     # Make graph directed (i.e., asymmetric edges possible)
     if directed:
         graph = nx.DiGraph(graph)  # shallow copy, because don't need two separate graphs
+
+    # Add edge weights
+    for edge in graph.edges:
+        from_e = edge[0]
+        to_e = edge[1]
+
+        # Sample weights & save them
+        weight = 1 + random.uniform(-1, 1)  # currently, weights in range [0,2]
+        graph[from_e][to_e]['weight'] = weight
+
     return graph
 
 
