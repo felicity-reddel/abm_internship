@@ -18,6 +18,8 @@ class MisinfoModel(Model):
         self.G = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
         self.grid = NetworkGrid(self.G)
         self.post_id_counter = 0
+        self.agents_data = {'n_followers_range': (0, 0),
+                            'n_following_range': (0, 0)}
 
         # Create agents
         for i in range(self.n_agents):
@@ -37,6 +39,12 @@ class MisinfoModel(Model):
         # Init neighbors (after all agents have been set up)
         for agent in self.schedule.agents:
             agent.neighbors = agent.get_neighbors()
+
+        # Update agents_data (now all connections are set up)
+        # TODO: fill list-comprehensions below for all agents
+        n_followers = []
+        n_following = []
+
 
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,

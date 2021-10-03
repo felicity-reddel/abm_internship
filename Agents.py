@@ -11,7 +11,7 @@ class BaseAgent(Agent):
         self.beliefs = {}
         self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
         self.init_beliefs()
-        self.neighbors = []
+        self.neighbors = []  # TODO: Not sure whether this is still needed. --> followers, following instead?
         self.will_post = True if random.random() < self.tendency_to_share else False
         self.received_posts = []
 
@@ -23,18 +23,16 @@ class BaseAgent(Agent):
 
         # Decide whether to post
         will_post = True if random.random() < self.tendency_to_share else False
-        # print(f"Agent_{self.unique_id} will share a post: {will_post}")
 
         # Create post & share
         if will_post:
             post = self.create_post()
 
             # Share post to neighbors
-            for neighbor in self.get_neighbors():
+            for neighbor in self.neighbors:
                 neighbor.received_posts.append(post)
 
     def update_beliefs_stage(self):
-        # print(f"Agent_{self.unique_id} updates beliefs.")
         if len(self.received_posts) > 0:
             # Do the update
             # self.update_beliefs_avg()
@@ -74,7 +72,7 @@ class BaseAgent(Agent):
                 # Calculate SIT components
                 strength = 1  # relative n_followers, [0,100]
                 immediacy = 1  # social immediacy: weighted_avg(belief_similarity, tie_strength)
-                #                   belief_similarity: abs(own_belief–friend_belief), [0, 100]
+                #                   belief_similarity: 100-abs(own_belief–friend_belief), [0, 100]
                 #                   tie_strength: edge_weight between agent & friend, [0,100]
                 n_sources = 1  # relative n_following, [0,100]
 
@@ -165,7 +163,7 @@ class BaseAgent(Agent):
         The agent who was more certain becomes even a bit more certain (due to the strong update of the other agent)."""
 
         # Pick neighbor
-        neighbors = self.get_neighbors()
+        neighbors = self.neighbors
         other_agent = self.random.choice(neighbors)
         # Determine who is more certain
         more_certain_agent, less_certain_agent = self.get_more_certain_agent(other_agent)
@@ -213,7 +211,6 @@ class BaseAgent(Agent):
 
     def toy_adjust_to_average(self):
         # Get neighbors' stances
-        self.neighbors = self.get_neighbors()  # to make sure the neighbors are uptodate
         neighbors_beliefs = [neighbor.beliefs[Topic.VAX] for neighbor in self.neighbors]
 
         # Update own belief towards average neighbor-belief
