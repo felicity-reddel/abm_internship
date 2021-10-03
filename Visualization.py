@@ -1,5 +1,6 @@
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+from numpy import interp
 
 from mesa.visualization.modules import ChartModule
 from mesa.visualization.modules import NetworkModule
@@ -22,14 +23,30 @@ def get_node_color(agent):
     c_val = scalar_map.to_rgba(belief)
     new_c_val = []
     for idx, val in enumerate(c_val):
-        if idx != 3:        # only adjust RGB, not transparency
-            new_c_val.append(val*256)
+        if idx != 3:  # only adjust RGB, not transparency
+            new_c_val.append(val * 256)
     c_val = tuple(new_c_val)
     return c_val
 
 
-def show_visualization(model):
+def get_edge_width(weight=1, weight_borders=(0, 2)):
+    """
+    Returns how wide the edge should be displayed.
+    :param weight:          float, edge weight
+    :param weight_borders:  tuple, (min, max)
+    :return:                float, width/thickness of the depicted edge
+    """
+    min_weight, max_weight = weight_borders
+    weight_range = [min_weight, max_weight]
+    width_range = [0.1, 2]
 
+    width = interp(weight, weight_range, width_range)
+    print(f"width: {width}")  # works
+
+    return width
+
+
+def show_visualization(model):
     def network_portrayal(G):
         # The model ensures there is always 1 agent per node
 
@@ -47,9 +64,14 @@ def show_visualization(model):
         portrayal['edges'] = [{'source': source,
                                'target': target,
                                'color': 'black',
-                               'width': 1
+                               'width': 1,
+                               # to adjust line-width based on edge-weight:
+                               # 'width': get_edge_width(G.edges[source, target, key]['weight']),
+                               'directed': True
+                               # 'directed' should work, but doesn't change anything:
+                               # https://github.com/projectmesa/mesa/issues/667
                                }
-                              for (source, target, _) in G.edges]
+                              for (source, target, key) in G.edges]
 
         return portrayal
 
