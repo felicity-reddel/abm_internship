@@ -8,7 +8,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
@@ -19,7 +18,6 @@ class MisinfoModel(Model):
         self.G = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
         self.grid = NetworkGrid(self.G)
         self.post_id_counter = 0
-
 
         # Create agents
         for i in range(self.n_agents):
@@ -40,19 +38,18 @@ class MisinfoModel(Model):
         for agent in self.schedule.agents:
             agent.neighbors = agent.get_neighbors()
 
-        self.datacollector = DataCollector(model_reporters={
-            "Avg Vax-Belief": self.get_avg_VAX_belief,
-            # "Belief Category Sizes": self.get_VAX_category_sizes})
-            "Above Vax-Threshold (>=50.0)": self.get_above_VAX_threshold,
-            "Below Vax-Threshold (<50.0)": self.get_below_VAX_threshold})
+        self.data_collector = DataCollector(model_reporters={
+            "Avg Vax-Belief": self.get_avg_vax_belief,
+            # "Belief Category Sizes": self.get_vax_category_sizes})
+            "Above Vax-Threshold (>=50.0)": self.get_above_vax_threshold,
+            "Below Vax-Threshold (<50.0)": self.get_below_vax_threshold})
 
     def step(self):
         """Advance the model by one step."""
         self.schedule.step()
-        self.datacollector.collect(self)
+        self.data_collector.collect(self)
 
-
-    def get_avg_VAX_belief(self, weird_error_fix_parameter) -> float:  # if without dummy parameter: get error
+    def get_avg_vax_belief(self, dummy) -> float:  # if without dummy parameter: get error
         """
         Return average belief of all agents on a given topic. For the DataCollector.
         :return:        float
@@ -64,12 +61,12 @@ class MisinfoModel(Model):
 
         return avg_belief
 
-    def get_VAX_category_sizes(self, weird_error_fix_parameter) -> tuple:
+    def get_vax_category_sizes(self, dummy) -> tuple:
         """
         Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
-        :param threshold:   float
-        :param topic:       Topic
+        # :param threshold:   float  # to make it more programmatic later
+        # :param topic:       Topic  # to make it more programmatic later
         :return:            tuple
         """
         topic = Topic.VAX
@@ -81,12 +78,12 @@ class MisinfoModel(Model):
 
         return n_above, n_below
 
-    def get_above_VAX_threshold(self, weird_error_fix_parameter) -> tuple:
+    def get_above_vax_threshold(self, dummy) -> int:
         """
         Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
-        :param threshold:   float
-        :param topic:       Topic
+        # :param threshold:   float  # to make it more programmatic later
+        # :param topic:       Topic  # to make it more programmatic later
         :return:            tuple
         """
         topic = Topic.VAX
@@ -97,12 +94,12 @@ class MisinfoModel(Model):
 
         return n_above
 
-    def get_below_VAX_threshold(self, weird_error_fix_parameter) -> tuple:
+    def get_below_vax_threshold(self, dummy) -> int:
         """
         Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
-        :param threshold:   float
-        :param topic:       Topic
+        # :param threshold:   float  # to make it more programmatic later
+        # :param topic:       Topic  # to make it more programmatic later
         :return:            tuple
         """
         topic = Topic.VAX
@@ -145,18 +142,19 @@ def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
     """
     graph = nx.barabasi_albert_graph(n_nodes, m, seed)
 
-    # Make graph directed (i.e., asymmetric edges possible)
+    # Make graph directed (i.e., asymmetric edges possible = multiple directed edges)
     if directed:
-        graph = nx.DiGraph(graph)  # shallow copy, because don't need two separate graphs
+        graph = nx.MultiDiGraph(graph)
 
     # Add edge weights
     for edge in graph.edges:
         from_e = edge[0]
         to_e = edge[1]
+        key = edge[2]
 
         # Sample weights & save them
         weight = 1 + random.uniform(-1, 1)  # currently, weights in range [0,2]
-        graph[from_e][to_e]['weight'] = weight
+        graph.edges[from_e, to_e, key]['weight'] = weight
 
     return graph
 

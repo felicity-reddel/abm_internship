@@ -1,21 +1,10 @@
-import sys
-import math
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
-import matplotlib.pyplot as plt
 
-from mesa.visualization.ModularVisualization import ModularServer
-from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.modules import ChartModule
 from mesa.visualization.modules import NetworkModule
-from mesa.visualization.modules import TextElement
-
-# from .model_network import HostNetwork
-# from .model_state import State, number_infected, number_susceptible, number_resistant, number_death
-
-from mesa.visualization.modules import CanvasGrid, NetworkVisualization
 from mesa.visualization.ModularVisualization import ModularServer
-from Agents import *
+
 from Model import *
 from Posts import *
 
@@ -60,7 +49,7 @@ def show_visualization(model):
                                'color': 'black',
                                'width': 1
                                }
-                              for (source, target) in G.edges]
+                              for (source, target, _) in G.edges]
 
         return portrayal
 
@@ -68,7 +57,7 @@ def show_visualization(model):
     chart = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"},
                          {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
                          {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"}],
-                        data_collector_name="datacollector")
+                        data_collector_name="data_collector")
 
     server = ModularServer(model,  # class name
                            [network, chart],
