@@ -29,7 +29,7 @@ def get_node_color(agent):
     return c_val
 
 
-def get_edge_width(weight=1, weight_borders=(0, 2)):
+def get_edge_width(weight=1, weight_borders=(0, 100)):
     """
     Returns how wide the edge should be displayed.
     :param weight:          float, edge weight
@@ -65,7 +65,7 @@ def show_visualization(model):
                                'target': target,
                                'color': 'black',
                                'width': 1,
-                               # to adjust line-width based on edge-weight:
+                               # to adjust line-width based on edge-weight, use instead:
                                # 'width': get_edge_width(G.edges[source, target, key]['weight']),
                                'directed': True
                                # 'directed' should work, but doesn't change anything:

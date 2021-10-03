@@ -153,7 +153,7 @@ def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
         key = edge[2]
 
         # Sample weights & save them
-        weight = 1 + random.uniform(-1, 1)  # currently, weights in range [0,2]
+        weight = 1 + random.uniform(0, 100)  # currently, weights in range [0,2]
         graph.edges[from_e, to_e, key]['weight'] = weight
 
     return graph
