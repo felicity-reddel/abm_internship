@@ -41,9 +41,6 @@ def get_node_color(agent):
 
 def show_visualization(model):
 
-# chart = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"}], data_collector_name="datacollector")
-
-
     def network_portrayal(G):
         # The model ensures there is always 1 agent per node
 

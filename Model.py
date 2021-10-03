@@ -1,5 +1,3 @@
-import random
-
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import StagedActivation
@@ -8,7 +6,6 @@ from Agents import *
 from Posts import *
 import networkx as nx
 import matplotlib.pyplot as plt
-from mesa.visualization.modules import ChartModule
 
 
 

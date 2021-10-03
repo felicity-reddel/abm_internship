@@ -7,7 +7,7 @@ class Post:
 
     def __init__(self, unique_id, stances={}, factcheck_result=False):
         self.unique_id = unique_id
-        self.stances = stances  # stances represented in the post
+        self.stances = stances  # stances represented in the post. {Topic: int_belief}
         # self.factcheck_result = factcheck_result
 
     @staticmethod
