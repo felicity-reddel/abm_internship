@@ -20,51 +20,8 @@ class MisinfoModel(Model):
         self.post_id_counter = 0
         self.agents_data = {'n_followers_range': (0, 0),
                             'n_following_range': (0, 0)}
-
-        # Create agents
-        for i in range(self.n_agents):
-            a = BaseAgent(i, self)
-            self.schedule.add(a)
-
-        # Place each agent in its node. (& save node_position into agent)
-        for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
-            agent = self.schedule.agents[node]
-
-            # save node_position into agent
-            self.grid.place_agent(agent, node)
-
-            # add agent to node
-            self.G.nodes[node]['agent'] = agent
-
-        # TODO: Separate function for init followers & following? –––––––––––––––––––––––––––––––––––––––––––––––––––––
-        n_followers_list = []
-        n_following_list = []
-        # Init followers & following (after all agents have been set up)
-        for agent in self.schedule.agents:
-            # agent.neighbors = agent.get_neighbors()  # Later: remove this & agent.neighbors as well.
-            # neighbors = [a.unique_id for a in agent.neighbors]
-            # should already give only outgoing edges? but gives all
-            # print(f"agent {agent.unique_id} neighbors: {neighbors}")
-
-            predecessors = [self.schedule.agents[a] for a in self.G.predecessors(agent.unique_id)]
-            agent.following = predecessors
-            n_following_list.append(len(agent.following))
-            # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
-
-            successors = [self.schedule.agents[a] for a in self.G.successors(agent.unique_id)]
-            agent.followers = successors
-            n_followers_list.append(len(agent.followers))
-            # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
-
-        # Actually save ranges for n_followers & n_following (=Update agents_data (now all connections are set up))
-        min_n_following = min(n_following_list)
-        max_n_following = max(n_following_list)
-        min_n_followers = min(n_followers_list)
-        max_n_followers = max(n_followers_list)
-
-        self.agents_data["n_following_range"] = (min_n_following, max_n_following)
-        self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
-        # TODO: –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+        self.init_agents()
+        self.init_followers_and_following()
 
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,
@@ -137,6 +94,52 @@ class MisinfoModel(Model):
         n_below = sum([1 for a_belief in agent_beliefs if a_belief < threshold])
 
         return n_below
+
+    def init_agents(self):
+        for i in range(self.n_agents):
+            a = BaseAgent(i, self)
+            self.schedule.add(a)
+
+        # Place each agent in its node. (& save node_position into agent)
+        for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
+            agent = self.schedule.agents[node]
+
+            # save node_position into agent
+            self.grid.place_agent(agent, node)
+
+            # add agent to node
+            self.G.nodes[node]['agent'] = agent
+
+    def init_followers_and_following(self):
+        n_followers_list = []
+        n_following_list = []
+
+        # Init followers & following (after all agents have been set up)
+        for agent in self.schedule.agents:
+            # Gather connected agents
+            predecessors = [self.schedule.agents[a] for a in self.G.predecessors(agent.unique_id)]
+            successors = [self.schedule.agents[a] for a in self.G.successors(agent.unique_id)]
+
+            # Assign to this agent
+            agent.following = predecessors
+            agent.followers = successors
+
+            # Gather number of followers/following to this agent
+            n_following_list.append(len(agent.following))
+            n_followers_list.append(len(agent.followers))
+
+            # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
+            # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
+
+        # Gather boundaries of ranges (n_followers & n_following)
+        min_n_following = min(n_following_list)
+        max_n_following = max(n_following_list)
+        min_n_followers = min(n_followers_list)
+        max_n_followers = max(n_followers_list)
+
+        # Save ranges into agents_data
+        self.agents_data["n_following_range"] = (min_n_following, max_n_following)
+        self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
 
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
