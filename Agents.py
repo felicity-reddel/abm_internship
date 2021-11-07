@@ -11,7 +11,9 @@ class BaseAgent(Agent):
         self.beliefs = {}
         self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
         self.init_beliefs()
-        self.neighbors = []  # TODO: Not sure whether this is still needed. --> followers, following instead?
+        # self.neighbors = []  # Just for toy examples --> delete later
+        self.followers = []
+        self.following = []
         self.will_post = True if random.random() < self.tendency_to_share else False
         self.received_posts = []
 
@@ -28,9 +30,13 @@ class BaseAgent(Agent):
         if will_post:
             post = self.create_post()
 
-            # Share post to neighbors
-            for neighbor in self.neighbors:
-                neighbor.received_posts.append(post)
+            # # Share post to neighbors
+            # for neighbor in self.neighbors:
+            #     neighbor.received_posts.append(post)
+
+            # Share post to followers
+            for follower in self.followers:
+                follower.received_posts.append((post, self))  # self = source of post
 
     def update_beliefs_stage(self):
         if len(self.received_posts) > 0:
@@ -51,7 +57,7 @@ class BaseAgent(Agent):
         New belief is average between own previous belief and the post's stance on the topic.
         """
 
-        for post in self.received_posts:
+        for post, _ in self.received_posts:
 
             # Update towards post's stances
             for topic, value in post.stances.items():
@@ -65,12 +71,12 @@ class BaseAgent(Agent):
             updates[topic] = 0
 
         # Calculate updates for each post and topic
-        for post in self.received_posts:
+        for post, source in self.received_posts:
             for topic, post_value in post.stances.items():
                 prev_belief = self.beliefs[topic]
 
                 # Calculate SIT components
-                strength = 1  # relative n_followers, [0,100]
+                strength = self.calculate_strength(source)  # relative n_followers of source, [0,100]
                 immediacy = 1  # social immediacy: weighted_avg(belief_similarity, tie_strength)
                 #                   belief_similarity: 100-abs(own_belief–friend_belief), [0, 100]
                 #                   tie_strength: edge_weight between agent & friend, [0,100]
@@ -220,3 +226,31 @@ class BaseAgent(Agent):
     # Lesson from toy_adjust_to_average:
     # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
     #   Either all/most agents get the vaccine or all/most don't. Moderate values.
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #  Simple SIT Belief-update
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+    def get_relative_n_followers(self, source):
+        """
+        Normalizes n_followers of agent.
+        If 0.0: least n_followers in network.
+        If 100.0: most n_followers in network.
+        :return:    relative_n_followers    float   percentile
+        """
+        n_followers = len(list(self.model.G.successors(source.unique_id)))
+        min_followers, max_followers = self.model.agents_data["n_followers_range"]
+
+        relative_n_followers = (n_followers - min_followers) / (max_followers - min_followers)
+        relative_n_followers = relative_n_followers * 100
+
+        return relative_n_followers
+
+    def calculate_strength(self, source):
+        """
+        Calculates the strength component for the SIT belief update. In this case just the relative number of followers.
+        :return:    strength    float
+        """
+        strength = self.get_relative_n_followers(source)
+        return strength
+

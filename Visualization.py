@@ -57,7 +57,8 @@ def show_visualization(model):
         portrayal['nodes'] = [{"shape": "circle",
                                "color": f'rgb{get_node_color(agent)}',
                                "size": 5,
-                               "tooltip": f"belief: {round(agent.beliefs[Topic.VAX])}",
+                               # "tooltip": f"belief: {round(agent.beliefs[Topic.VAX])}",
+                               "tooltip": f"{round(agent.unique_id)}"
                                }
                               for (id, agent) in G.nodes.data("agent")]
 

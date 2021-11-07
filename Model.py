@@ -36,15 +36,35 @@ class MisinfoModel(Model):
             # add agent to node
             self.G.nodes[node]['agent'] = agent
 
-        # Init neighbors (after all agents have been set up)
+        # TODO: Separate function for init followers & following? –––––––––––––––––––––––––––––––––––––––––––––––––––––
+        n_followers_list = []
+        n_following_list = []
+        # Init followers & following (after all agents have been set up)
         for agent in self.schedule.agents:
-            agent.neighbors = agent.get_neighbors()
+            # agent.neighbors = agent.get_neighbors()  # Later: remove this & agent.neighbors as well.
+            # neighbors = [a.unique_id for a in agent.neighbors]
+            # should already give only outgoing edges? but gives all
+            # print(f"agent {agent.unique_id} neighbors: {neighbors}")
 
-        # Update agents_data (now all connections are set up)
-        # TODO: fill list-comprehensions below for all agents
-        n_followers = []
-        n_following = []
+            predecessors = [self.schedule.agents[a] for a in self.G.predecessors(agent.unique_id)]
+            agent.following = predecessors
+            n_following_list.append(len(agent.following))
+            # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
 
+            successors = [self.schedule.agents[a] for a in self.G.successors(agent.unique_id)]
+            agent.followers = successors
+            n_followers_list.append(len(agent.followers))
+            # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
+
+        # Actually save ranges for n_followers & n_following (=Update agents_data (now all connections are set up))
+        min_n_following = min(n_following_list)
+        max_n_following = max(n_following_list)
+        min_n_followers = min(n_followers_list)
+        max_n_followers = max(n_followers_list)
+
+        self.agents_data["n_following_range"] = (min_n_following, max_n_following)
+        self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
+        # TODO: –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,
@@ -149,20 +169,32 @@ def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
     # FYI:      n=10, m=3, doesn't create 30 edges, but only e.g., 21. Not each node has 3 edges.
     """
     graph = nx.barabasi_albert_graph(n_nodes, m, seed)
+    # print(f'graph edges: {graph.edges}')
+    # print(f'len graph edges: {len(graph.edges)}')
 
-    # Make graph directed (i.e., asymmetric edges possible = multiple directed edges)
-    if directed:
-        graph = nx.MultiDiGraph(graph)
+    if directed:  # --> has key
+        # Make graph directed (i.e., asymmetric edges possible = multiple directed edges)
+        graph = nx.MultiDiGraph(graph)  # undirected --> "=bidirectional"
 
-    # Add edge weights
-    for edge in graph.edges:
-        from_e = edge[0]
-        to_e = edge[1]
-        key = edge[2]
+        # Add edge weights
+        for edge in graph.edges:
+            from_e = edge[0]
+            to_e = edge[1]
+            key = edge[2]
 
-        # Sample weights & save them
-        weight = 1 + random.uniform(0, 100)  # currently, weights in range [0,2]
-        graph.edges[from_e, to_e, key]['weight'] = weight
+            # Sample weights & save them
+            weight = 1 + random.random() * random.choice([-1, 1])  # weights in range [0,2]: no visible change
+            graph.edges[from_e, to_e, key]['weight'] = weight
+
+    else:  # not directed --> no key
+        # Add edge weights
+        for edge in graph.edges:
+            from_e = edge[0]
+            to_e = edge[1]
+
+            # Sample weights & save them
+            weight = 1 + random.random() * random.choice([-1, 1])  # weights in range [0,2]: no visible change
+            graph.edges[from_e, to_e]['weight'] = weight
 
     return graph
 
