@@ -38,6 +38,7 @@ class Post:
                 current_belief = based_on_agent.beliefs[topic]
                 adjusted_skew = adjust_skew(current_belief, skew)
                 value = skewnorm.rvs(a=adjusted_skew, loc=current_belief)
+                value = max(min(value, 100), 0)
             else:
                 value = random.randint(0, 100)
             stances[topic] = value

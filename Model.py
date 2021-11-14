@@ -186,7 +186,7 @@ def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
             key = edge[2]
 
             # Sample weights & save them
-            weight = 1 + random.random() * random.choice([-1, 1])  # weights in range [0,2]: no visible change
+            weight = random.randint(0, 100)
             graph.edges[from_e, to_e, key]['weight'] = weight
 
     else:  # not directed --> no key

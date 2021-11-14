@@ -11,11 +11,11 @@ class BaseAgent(Agent):
         self.beliefs = {}
         self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
         self.init_beliefs()
-        # self.neighbors = []  # Just for toy examples --> delete later
         self.followers = []
         self.following = []
         self.will_post = True if random.random() < self.tendency_to_share else False
         self.received_posts = []
+        self.last_posts = []  # currently: all posts
 
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     #   Step function: in two Stages.
@@ -29,10 +29,7 @@ class BaseAgent(Agent):
         # Create post & share
         if will_post:
             post = self.create_post()
-
-            # # Share post to neighbors
-            # for neighbor in self.neighbors:
-            #     neighbor.received_posts.append(post)
+            self.last_posts.append(post)
 
             # Share post to followers
             for follower in self.followers:
@@ -76,14 +73,17 @@ class BaseAgent(Agent):
                 prev_belief = self.beliefs[topic]
 
                 # Calculate SIT components
-                strength = self.calculate_strength(source)  # relative n_followers of source, [0,100]
-                immediacy = 1  # social immediacy: weighted_avg(belief_similarity, tie_strength)
-                #                   belief_similarity: 100-abs(own_belief–friend_belief), [0, 100]
-                #                   tie_strength: edge_weight between agent & friend, [0,100]
-                n_sources = 1  # relative n_following, [0,100]
+                strength = self.calculate_strength(source)
+                # strength: weighted_avg(relative n_followers, belief_similarity)
+                #                   relative n_followers of source: [0,100]
+                #                   belief_similarity: 100 - abs(own_belief–friend_belief), [0, 100]
+                immediacy = self.calculate_immediacy(post, source)  # tie_strength
+                # tie_strength: edge_weight between agent & friend, [0,100]
+                n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
 
                 # Combine components
                 social_impact = strength * immediacy * n_sources
+                # social_impact = (strength + immediacy + n_sources) / 3
                 direction = -1 if post_value < prev_belief else 1
 
                 update = social_impact * direction
@@ -114,7 +114,10 @@ class BaseAgent(Agent):
         :return: Post
         """
         # Get post_id & post's stances
-        id = self.model.post_id_counter + 1
+        id = self.model.post_id_counter
+        # Increase post_id_counter
+        self.model.post_id_counter += 1
+
         if based_on_beliefs:
             stances = Post.sample_stances(based_on_agent=self)
         else:
@@ -253,4 +256,63 @@ class BaseAgent(Agent):
         """
         strength = self.get_relative_n_followers(source)
         return strength
+
+    def calculate_immediacy(self, post, source):
+        """
+        Calculates immediacy component for the SIT belief update as a combination of tie strength (i.e., edge weight)
+        and similarity of beliefs. The other person's beliefs are estimated by looking at the stances of their last
+        posts.
+        :param post:        current post by other person
+        :param source:      other person
+        :return:            immediacy value
+        """
+
+        belief_similarity = self.estimate_belief_similarity(post, source)
+        tie_strength = self.model.G.edges[self.unique_id, source.unique_id, 0]['weight']  # Always key=0 because
+        # maximally one connection in this direction possible.
+        immediacy = (belief_similarity + tie_strength)/2
+
+        return immediacy
+
+    def estimate_belief_similarity(self, post, source):
+        """
+        For the immediacy component of the SIT belief update, estimate the belief similarity of self to other agent
+        (only considering topics in this post).
+        # EXTENSION: could also consider all topics mentioned in their last posts
+        :param post:    Post
+        :param source:  Agent
+        :return:        float, similarity estimate
+        """
+        # Estimate other person's beliefs (on topics in current post)
+        estimated_beliefs = {}
+
+        for topic, value in post.stances.items():
+            # Estimate their belief on 'topic' by looking at their last posts
+            values = []
+            for post in source.last_posts:
+                if topic in post.stances:
+                    value = post.stances[topic]
+                    values.append(value)
+            estimated_beliefs[topic] = sum(values) / len(values)
+
+        # Calculate belief similarity (on beliefs in current post)
+        similarities = []
+        for topic, _ in post.stances.items():
+            similarity = 100 - abs(self.beliefs[topic] - estimated_beliefs[topic])
+            similarities.append(similarity)
+        belief_similarity = sum(similarities) / len(similarities)
+
+        # print(f'belief_similarity: {belief_similarity}')
+        return belief_similarity
+
+    def calculate_n_sources(self):
+        """
+        For the immediacy component of the SIT belief update, calculates the factor n_sources. The more accounts a user
+        is following, the less they will update their beliefs based on each single one of them.
+        :return:    float
+        """
+        n_following = len(self.following)
+        n_sources = (1.0 / n_following) * 100
+
+        return n_sources
 
