@@ -73,17 +73,18 @@ class BaseAgent(Agent):
                 prev_belief = self.beliefs[topic]
 
                 # Calculate SIT components
-                strength = self.calculate_strength(source)
-                # strength: weighted_avg(relative n_followers, belief_similarity)
-                #                   relative n_followers of source: [0,100]
-                #                   belief_similarity: 100 - abs(own_belief–friend_belief), [0, 100]
-                immediacy = self.calculate_immediacy(post, source)  # tie_strength
-                # tie_strength: edge_weight between agent & friend, [0,100]
+                strength = self.calculate_strength(post, source)  # avg(relative n_followers, belief_similarity)
+                # belief_similarity: between own_beliefs and source's_beliefs
+                immediacy = self.calculate_immediacy(source)  # tie_strength
                 n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
 
                 # Combine components
-                social_impact = strength * immediacy * n_sources
-                # social_impact = (strength + immediacy + n_sources) / 3
+                # Version 1: original, extreme updates
+                # social_impact = strength * immediacy * n_sources
+                # Version 2: attempt, still extreme updates
+                social_impact = (strength + immediacy + n_sources) / 3
+                # Version 3?
+
                 direction = -1 if post_value < prev_belief else 1
 
                 update = social_impact * direction
@@ -249,28 +250,31 @@ class BaseAgent(Agent):
 
         return relative_n_followers
 
-    def calculate_strength(self, source):
+    def calculate_strength(self, post, source):
         """
-        Calculates the strength component for the SIT belief update. In this case just the relative number of followers.
-        :return:    strength    float
+        Calculates the strength component for the SIT belief update. In this case a combination of
+        the relative number of followers and the belief_similarity between own belief & estimated belief of source.
+        The other person's beliefs are estimated by looking at the stances of their last posts.
+        :param post:        current post by other person (i.e., source)
+        :param source:      other person (i.e., source)
+        :return:            strength    float
         """
-        strength = self.get_relative_n_followers(source)
+        rel_n_followers = self.get_relative_n_followers(source)
+        belief_similarity = self.estimate_belief_similarity(post, source)
+        strength = (rel_n_followers + belief_similarity)/2
+
         return strength
 
-    def calculate_immediacy(self, post, source):
+    def calculate_immediacy(self, source):
         """
-        Calculates immediacy component for the SIT belief update as a combination of tie strength (i.e., edge weight)
-        and similarity of beliefs. The other person's beliefs are estimated by looking at the stances of their last
-        posts.
-        :param post:        current post by other person
-        :param source:      other person
+        Calculates immediacy component for the SIT belief update as  tie strength (i.e., edge weight).
+        :param source:      other person (i.e., source)
         :return:            immediacy value
         """
 
-        belief_similarity = self.estimate_belief_similarity(post, source)
         tie_strength = self.model.G.edges[self.unique_id, source.unique_id, 0]['weight']  # Always key=0 because
         # maximally one connection in this direction possible.
-        immediacy = (belief_similarity + tie_strength)/2
+        immediacy = tie_strength
 
         return immediacy
 
