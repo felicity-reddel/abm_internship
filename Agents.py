@@ -1,3 +1,4 @@
+import math
 from mesa import Agent
 from Posts import *
 
@@ -62,13 +63,14 @@ class BaseAgent(Agent):
                 self.beliefs[topic] = (prev_belief + value) / 2
 
     def update_beliefs_simple_sit(self):
-        # Prepare updates dict
-        updates = {}
-        for topic in Topic:
-            updates[topic] = 0
-
         # Calculate updates for each post and topic
         for post, source in self.received_posts:
+
+            # Prepare updates dict (to update after each seen post)
+            updates = {}
+            for topic in Topic:
+                updates[topic] = 0
+
             for topic, post_value in post.stances.items():
                 prev_belief = self.beliefs[topic]
 
@@ -79,27 +81,32 @@ class BaseAgent(Agent):
                 n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
 
                 # Combine components
-                # Version 1: original, extreme updates
-                # social_impact = strength * immediacy * n_sources
-                # Version 2: attempt, still extreme updates
-                social_impact = (strength + immediacy + n_sources) / 3
-                # Version 3?
+                social_impact = strength * immediacy * n_sources
 
-                direction = -1 if post_value < prev_belief else 1
+                # Rescaling such that:
+                # the maximal decrease results in a belief of 0, and
+                # the maximal increase results in a belief of 100.
+                max_decrease = -1 * prev_belief
+                max_increase = 100 - prev_belief
+                rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
 
-                update = social_impact * direction
+                # Calculate update elasticity
+                update_elasticity = self.calculate_update_elasticity(prev_belief)
+
+                # Calculate update for belief on topic
+                update = rescaled_social_impact * update_elasticity
                 updates[topic] += update
 
-        # Update own beliefs
-        for topic, update in updates.items():
-            prev_belief = self.beliefs[topic]
-            # Make sure belief stays in [0,100]-range
-            self.beliefs[topic] = max(0, min(100, prev_belief+update))
+                if self.unique_id == 0:
+                    print(f'prev_belief: {prev_belief} \n'
+                          f'update_elasticity: {update_elasticity} \n'
+                          f'social impact: {rescaled_social_impact} \n'
+                          f'update: {update} \n')
 
-    # Lesson from update_beliefs_simple_sit:
-    # - Takes a lot longer to converge.
-    # - Most agents end up with quite strong beliefs.
-    # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
+            # Update own beliefs  (after each seen post)
+            for topic, update in updates.items():
+                prev_belief = self.beliefs[topic]
+                self.beliefs[topic] = prev_belief + update
 
     def init_beliefs(self):
         """
@@ -306,7 +313,6 @@ class BaseAgent(Agent):
             similarities.append(similarity)
         belief_similarity = sum(similarities) / len(similarities)
 
-        # print(f'belief_similarity: {belief_similarity}')
         return belief_similarity
 
     def calculate_n_sources(self):
@@ -320,3 +326,63 @@ class BaseAgent(Agent):
 
         return n_sources
 
+    @staticmethod
+    def calculate_update_elasticity(prev_belief, belief_domain=(0, 100), std_dev=30.0):
+        """
+        Calculates the update elasticity of an agent given its previous belief.
+        Needed because it takes more until someone updates away from a belief in which they have high confidence
+        (i.e., belief close extremes of the belief_domain). Beliefs don't update from e.g., 99 --> 20 due to one post.
+        Analogously, when someone has low confidence in a belief (i.e., close to middle of belief_domain),
+        it makes sense that they update more per post.
+
+        :param prev_belief:             float, previous belief of an agent  (domain: belief_domain)
+        :param belief_domain:           tuple, (min, max)
+        :param std_dev:                 float or int                        (domain: belief_domain)
+        :return: update_elasticity:     float                               (domain: [0,1])
+        """
+        x = prev_belief
+        min_belief, max_belief = belief_domain
+        mean = float(min_belief + max_belief)/2
+        y = normal_distribution(x, mean, std_dev)
+
+        # Scale y, such that at middle (e.g., 50), the update elasticity is 1:
+        max_elasticity = normal_distribution(x=mean)
+        update_elasticity = y / max_elasticity
+        return update_elasticity
+
+
+def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(-100, 100)):
+    """
+    Rescales a value from one range to another.
+    By default from range [-100ˆ3,100ˆ3] to [-100,100].
+
+    :param old_value:   float
+    :param old_domain:   tuple, (min_old_range, max_old_range)
+    :param new_domain:   tuple, (min_new_range, max_new_range)
+    :return: new_value: float
+    """
+    old_min, old_max = old_domain
+    new_min, new_max = new_domain
+    old_range = old_max - old_min
+    new_range = new_max - new_min
+
+    new_value = (old_value - old_min) * new_range / old_range + new_min
+
+    return new_value
+
+
+def normal_distribution(x, mean=50.0, std_dev=30.0):
+    """
+    Returns which y corresponds to the provided x value and parameter of the normal distribution.
+    :param x:       float
+    :param mean:    float
+    :param std_dev: float
+    :return: y      float
+    """
+
+    dividend = math.exp((-(x - mean) ** 2 / (2 * std_dev ** 2)))
+    divisor = math.sqrt(2 * math.pi) * std_dev
+
+    y = dividend / divisor
+
+    return y
