@@ -2,8 +2,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 from numpy import interp
 
-from mesa.visualization.modules import ChartModule
-from mesa.visualization.modules import NetworkModule
+from mesa.visualization.modules import ChartModule, NetworkModule
 from mesa.visualization.ModularVisualization import ModularServer
 
 from Model import *
@@ -77,15 +76,22 @@ def show_visualization(model):
         return portrayal
 
     network = NetworkModule(network_portrayal, 500, 500, library='d3')
-    chart = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"},
-                         # {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
-                         # {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"},
-                         {"Label": "Avg Vax-Belief above threshold", "Color": "green"},
-                         {"Label": "Avg Vax-Belief below threshold", "Color": "red"}],
-                        data_collector_name="data_collector")
+    chart_avg_belief = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"},
+                                    # {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
+                                    # {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"},
+                                    {"Label": "Avg Vax-Belief above threshold", "Color": "green"},
+                                    {"Label": "Avg Vax-Belief below threshold", "Color": "red"}],
+                                   data_collector_name="data_collector")
+
+    chart_indiv_belief = ChartModule([{"Label": "Agent 0", "Color": "yellow"},
+                                      {"Label": "Agent 25", "Color": "orange"},
+                                      {"Label": "Agent 50", "Color": "red"},
+                                      {"Label": "Agent 75", "Color": "purple"},
+                                      {"Label": "Agent 99", "Color": "blue"},],
+                                     data_collector_name="data_collector2")
 
     server = ModularServer(model,  # class name
-                           [network, chart],
+                           [network, chart_avg_belief, chart_indiv_belief],
                            'Misinfo Model',  # title
                            {'n_agents': 100})  # model parameters
 

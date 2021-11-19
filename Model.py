@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import StagedActivation
@@ -31,12 +33,26 @@ class MisinfoModel(Model):
             "Avg Vax-Belief above threshold": self.get_avg_above_vax_threshold,
             "Avg Vax-Belief below threshold": self.get_avg_below_vax_threshold})
 
+        # DataCollector2: follow individual agents
+        # Hard-coded because programmatic attempt didn't work out. (see Trello)
+        self.data_collector2 = DataCollector(model_reporters={
+            f"Agent 0": self.get_vax_belief_0,
+            f"Agent 25": self.get_vax_belief_25,
+            f"Agent 50": self.get_vax_belief_50,
+            f"Agent 75": self.get_vax_belief_75,
+            f"Agent 99": self.get_vax_belief_99,
+            })
+
     def step(self):
         """Advance the model by one step."""
         self.schedule.step()
         self.data_collector.collect(self)
+        self.data_collector2.collect(self)
 
-    def get_avg_vax_belief(self, dummy) -> float:  # if without dummy parameter: get error
+# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+# DataCollector functions
+# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    def get_avg_vax_belief(self, dummy) -> float:  # dummy parameter: to avoid error
         """
         Return average belief of all agents on a given topic. For the DataCollector.
         :return:        float
@@ -129,6 +145,68 @@ class MisinfoModel(Model):
             avg = sum(beliefs_below_threshold) / len(beliefs_below_threshold)
 
         return avg
+
+    def get_vax_beliefs(self) -> list:
+        """
+        Returns list of vax-belief of all agents.
+        For the DataCollector.
+        :return: list (of floats)
+        """
+
+        # get_vax_beliefs = []
+        # for agent in self.schedule.agents:
+        #     get_vax_beliefs += agent.beliefs[Topic.VAX]
+
+        vax_beliefs = [agent.beliefs[Topic.VAX] for agent in self.schedule.agents]
+
+        return vax_beliefs
+    
+    def get_indiv_vax_beliefs(self, agent_ids_list) -> dict:
+        """
+        Returns a dictionary of the current get_vax_beliefs of the agents with the unique_ids listed in agent_ids_list.
+        :param agent_ids_list: list of agent.unique_id's
+        :return: dict, {unique_id: vax_belief}
+        """
+        
+        vax_beliefs: dict[str, float] = {}
+        # for id in agent_ids_list:
+        #     agent = self.schedule.agents[id]
+        #     belief = agent.beliefs[Topic.VAX]
+        #     vax_beliefs[f'belief of agent {id}'] = belief
+
+        agents = [a for a in self.schedule.agents if a.unique_id in agent_ids_list]
+        for agent in agents:
+            belief = agent.beliefs[Topic.VAX]
+            vax_beliefs[f'belief of agent {id}'] = belief
+        
+        return vax_beliefs
+
+# Hard-coded because programmatic attempt didn't work out. (see Trello)
+    def get_vax_belief_0(self, dummy) -> float:
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 0][0]
+        belief = agent_i.beliefs[Topic.VAX]
+        return belief
+
+    def get_vax_belief_25(self, dummy) -> float:
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 25][0]
+        belief = agent_i.beliefs[Topic.VAX]
+        return belief
+
+    def get_vax_belief_50(self, dummy) -> float:
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 50][0]
+        belief = agent_i.beliefs[Topic.VAX]
+        return belief
+
+    def get_vax_belief_75(self, dummy) -> float:
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 75][0]
+        belief = agent_i.beliefs[Topic.VAX]
+        return belief
+
+    def get_vax_belief_99(self, dummy) -> float:
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 99][0]
+        belief = agent_i.beliefs[Topic.VAX]
+        return belief
+# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def init_agents(self):
         for i in range(self.n_agents):
