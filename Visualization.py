@@ -78,8 +78,10 @@ def show_visualization(model):
 
     network = NetworkModule(network_portrayal, 500, 500, library='d3')
     chart = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"},
-                         {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
-                         {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"}],
+                         # {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
+                         # {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"},
+                         {"Label": "Avg Vax-Belief above threshold", "Color": "green"},
+                         {"Label": "Avg Vax-Belief below threshold", "Color": "red"}],
                         data_collector_name="data_collector")
 
     server = ModularServer(model,  # class name

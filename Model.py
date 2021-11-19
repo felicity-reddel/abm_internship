@@ -26,8 +26,10 @@ class MisinfoModel(Model):
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,
             # "Belief Category Sizes": self.get_vax_category_sizes})
-            "Above Vax-Threshold (>=50.0)": self.get_above_vax_threshold,
-            "Below Vax-Threshold (<50.0)": self.get_below_vax_threshold})
+            # "Above Vax-Threshold (>=50.0)": self.get_above_vax_threshold,
+            # "Below Vax-Threshold (<50.0)": self.get_below_vax_threshold,
+            "Avg Vax-Belief above threshold": self.get_avg_above_vax_threshold,
+            "Avg Vax-Belief below threshold": self.get_avg_below_vax_threshold})
 
     def step(self):
         """Advance the model by one step."""
@@ -63,13 +65,12 @@ class MisinfoModel(Model):
 
         return n_above, n_below
 
-    def get_above_vax_threshold(self, dummy) -> int:
+    def get_above_vax_threshold(self, dummy) -> int:   # adjust code later: threshold_dict={Topic.VAX: 50.0}?
         """
-        Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
+        Returns how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
-        # :param threshold:   float  # to make it more programmatic later
-        # :param topic:       Topic  # to make it more programmatic later
-        :return:            tuple
+        # :param threshold_dict:   dict {Topic: float}  # to make it more programmatic later. Not sure whether possible.
+        :return: int
         """
         topic = Topic.VAX
         threshold = 50.0
@@ -81,7 +82,7 @@ class MisinfoModel(Model):
 
     def get_below_vax_threshold(self, dummy) -> int:
         """
-        Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
+        Returns how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
         # :param threshold:   float  # to make it more programmatic later
         # :param topic:       Topic  # to make it more programmatic later
@@ -94,6 +95,40 @@ class MisinfoModel(Model):
         n_below = sum([1 for a_belief in agent_beliefs if a_belief < threshold])
 
         return n_below
+
+    def get_avg_above_vax_threshold(self, dummy) -> float:
+        """
+        Returns the average belief of agents that are above the provided threshold.
+         For the DataCollector.
+        :return: float
+        """
+        topic = Topic.VAX
+        threshold = 50.0
+
+        beliefs_above_threshold = [a.beliefs[topic] for a in self.schedule.agents if a.beliefs[topic] >= threshold]
+        if len(beliefs_above_threshold) == 0:
+            avg = self.get_avg_below_vax_threshold(self)  # If nobody above threshold, take avg of below threshold.
+        else:
+            avg = sum(beliefs_above_threshold) / len(beliefs_above_threshold)
+        return avg
+
+    def get_avg_below_vax_threshold(self, dummy) -> float:
+        """
+        Returns the average belief of agents that are below the provided threshold.
+         For the DataCollector.
+        :return: float
+        """
+        topic = Topic.VAX
+        threshold = 50.0
+
+        beliefs_below_threshold = [a.beliefs[topic] for a in self.schedule.agents if a.beliefs[topic] < threshold]
+
+        if len(beliefs_below_threshold) == 0:
+            avg = self.get_avg_above_vax_threshold(self)  # If nobody below threshold, take avg of above threshold.
+        else:
+            avg = sum(beliefs_below_threshold) / len(beliefs_below_threshold)
+
+        return avg
 
     def init_agents(self):
         for i in range(self.n_agents):
