@@ -68,6 +68,7 @@ class BaseAgent(Agent):
                 post_judged_as_truthful = self.judge_truthfulness(post)
                 # For each seen post, which is judged as truthful: update beliefs.
                 if post_judged_as_truthful:
+
                     # Update beliefs
                     self.update_beliefs_simple_sit(post, source)
 
@@ -101,45 +102,8 @@ class BaseAgent(Agent):
         :param source:  (Base)Agent, the source of the post
         """
 
-        # Prepare updates dict (to update after each seen post)
-        updates = {}
-        for topic in Topic:
-            updates[str(topic)] = 0
-
         # Calculate how the agent will update its beliefs
-        for topic, post_value in post.stances.items():
-            # Save previous beliefs
-            prev_belief = self.beliefs[topic]
-
-            # Calculate SIT components
-            strength = self.calculate_strength(post, source)  # avg(relative n_followers, belief_similarity)
-            # belief_similarity: between own_beliefs and source's_beliefs
-            immediacy = self.calculate_immediacy(source)  # tie_strength
-            n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
-
-            # Combine components
-            social_impact = strength * immediacy * n_sources
-
-            # Rescale such that:
-            # the maximal decrease results in a belief of 0, and
-            # the maximal increase results in a belief of 100.
-            max_decrease = -1 * prev_belief
-            max_increase = 100 - prev_belief
-            rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
-
-            # Calculate update elasticity
-            update_elasticity = self.calculate_update_elasticity(prev_belief)
-
-            # Calculate update for belief on topic
-            update = rescaled_social_impact * update_elasticity
-            updates[topic] += update
-
-            # Validation
-            # if self.unique_id == 0:
-            #     print(f'prev_belief: {prev_belief} \n'
-            #           f'update_elasticity: {update_elasticity} \n'
-            #           f'social impact: {rescaled_social_impact} \n'
-            #           f'update: {update} \n')
+        updates = self.calculate_belief_update(post, source)
 
         # Update own beliefs  (after each seen post)
         for topic, update in updates.items():
@@ -415,6 +379,56 @@ class BaseAgent(Agent):
         """
         """>>>>>>>> CURRENTLY DUMMY BECAUSE BEFORE RANKING IMPLEMENTATION <<<<<<<<<<"""
         return self.received_posts
+
+    def calculate_belief_update(self, post, source) -> dict:
+        """
+        Calculates the agent's updates on the past.
+        :param post:    Post
+        :param source:  (Base)Agent, the source of the post
+        :return:        dict, {topic: update}
+        """
+
+        # Prepare updates dict (to update after each seen post)
+        updates = {}
+        for topic in Topic:
+            updates[str(topic)] = 0
+
+        # Calculate updates
+        for topic, post_value in post.stances.items():
+            # Save previous beliefs
+            prev_belief = self.beliefs[topic]
+
+            # Calculate SIT components
+            strength = self.calculate_strength(post, source)  # avg(relative n_followers, belief_similarity)
+            # belief_similarity: between own_beliefs and source's_beliefs
+            immediacy = self.calculate_immediacy(source)  # tie_strength
+            n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
+
+            # Combine components
+            social_impact = strength * immediacy * n_sources
+
+            # Rescale such that:
+            # the maximal decrease results in a belief of 0, and
+            # the maximal increase results in a belief of 100.
+            max_decrease = -1 * prev_belief
+            max_increase = 100 - prev_belief
+            rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
+
+            # Calculate update elasticity
+            update_elasticity = self.calculate_update_elasticity(prev_belief)
+
+            # Calculate final update for belief on topic
+            update = rescaled_social_impact * update_elasticity
+            updates[topic] += update
+
+            # # Validation
+            # if self.unique_id == 0:
+            #     print(f'prev_belief: {prev_belief} \n'
+            #           f'update_elasticity: {update_elasticity} \n'
+            #           f'social impact: {rescaled_social_impact} \n'
+            #           f'update: {update} \n')
+
+        return updates
 
 
 def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(-100, 100)):
