@@ -10,18 +10,37 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
+class SelectAgentsBy(Enum):
+    """
+    Possibilities to select agents. E.g., for who will by empowered by the Media Literacy Intervention.
+    Easily extendable to e.g., pick agents based on an agent-characteristic (e.g., age, if age is an agent attribute).
+    """
+
+    def __eq__(self, o: object) -> bool:
+        if self.value is o.value:
+            return True
+        else:
+            return False
+
+    RANDOM = 0
+    # HIGH_AGE = 1
+    # LOW_AGE = 2
+
+
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=2, media_literacy_intervention=0.0):
+    def __init__(self, n_agents, n_edges=2, media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM)):
         """
         Initializes the MisinfoModel
         :param n_agents: int, how many agents the model should have
         :param n_edges: int, with how many edges gets attached to the already built network
-        :param media_literacy_intervention: float, domain [0,1),
-                Percentage of agents empowered by media literacy intervention.
-                If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
-                If 1.0: everybody is empowered by it.
+        :param media_literacy_intervention: tuple(float, SelectAgentsBy)
+                float:
+                    - domain [0,1)
+                    - meaning: Percentage of agents empowered by media literacy intervention.
+                                If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
+                                If 1.0: everybody is empowered by it.
         """
         super().__init__()
         self.n_agents = n_agents
@@ -52,7 +71,7 @@ class MisinfoModel(Model):
             f"Agent 50": self.get_vax_belief_50,
             f"Agent 75": self.get_vax_belief_75,
             f"Agent 99": self.get_vax_belief_99,
-            })
+        })
 
     def step(self):
         """Advance the model by one step."""
@@ -60,9 +79,9 @@ class MisinfoModel(Model):
         self.data_collector.collect(self)
         self.data_collector2.collect(self)
 
-# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-# DataCollector functions
-# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # DataCollector functions
+    # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     def get_avg_vax_belief(self, dummy) -> float:  # dummy parameter: to avoid error
         """
         Return average belief of all agents on a given topic. For the DataCollector.
@@ -92,7 +111,7 @@ class MisinfoModel(Model):
 
         return n_above, n_below
 
-    def get_above_vax_threshold(self, dummy) -> int:   # adjust code later: threshold_dict={Topic.VAX: 50.0}?
+    def get_above_vax_threshold(self, dummy) -> int:  # adjust code later: threshold_dict={Topic.VAX: 50.0}?
         """
         Returns how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
@@ -171,7 +190,7 @@ class MisinfoModel(Model):
         vax_beliefs = [agent.beliefs[topic] for agent in self.schedule.agents]
 
         return vax_beliefs
-    
+
     def get_indiv_vax_beliefs(self, agent_ids_list) -> dict:
         """
         Returns a dictionary of the current get_vax_beliefs of the agents with the unique_ids listed in agent_ids_list.
@@ -184,10 +203,10 @@ class MisinfoModel(Model):
         for agent in agents:
             belief = agent.beliefs[topic]
             vax_beliefs[f'belief of agent {id}'] = belief
-        
+
         return vax_beliefs
 
-# Hard-coded because programmatic attempt didn't work out. (see Trello)
+    # Hard-coded because programmatic attempt didn't work out. (see Trello)
     def get_vax_belief_0(self, dummy) -> float:
         topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 0][0]
@@ -217,7 +236,7 @@ class MisinfoModel(Model):
         agent_i = [a for a in self.schedule.agents if a.unique_id == 99][0]
         belief = agent_i.beliefs[topic]
         return belief
-# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def init_agents(self):
         for i in range(self.n_agents):
@@ -265,7 +284,7 @@ class MisinfoModel(Model):
         self.agents_data["n_following_range"] = (min_n_following, max_n_following)
         self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
 
-    def apply_media_literacy_intervention(self, media_literacy_intervention):
+    def apply_media_literacy_intervention(self, media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM)):
         """
         Applies the media literacy intervention (if needed).
         :param media_literacy_intervention: float, [0,1),
@@ -273,18 +292,36 @@ class MisinfoModel(Model):
                     If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
                     If 1.0: everybody is empowered by it.
         """
-        # If media literacy intervention is used:
-        # (i.e., if some percentage of agents is targeted with it)
-        if media_literacy_intervention > 0.0:
-            # Gather agents that could benefit from the intervention
-            agents_ml_low = [agent for agent in self.schedule.agents if agent.media_literacy.__eq__(MediaLiteracy.LOW)]
-            # EXT: maybe switch to random.choice mli_target_percent
+        percentage, select_by = media_literacy_intervention
 
-            for agent in agents_ml_low:
-                # Sample whether to increase this agent's media literacy
-                will_increase = random.random() <= media_literacy_intervention
-                if will_increase:
-                    agent.media_literacy = MediaLiteracy.HIGH
+        # If media literacy intervention is used: select agents for intervention, adjust their media literacy.
+        # (i.e., if some percentage of agents is targeted with it)
+        if percentage > 0.0:
+            n_select = int(len(self.schedule.agents) * percentage)
+            selected_agents = self.select_agents_for_media_literacy_intervention(n_select, select_by)
+
+            # Benefiting agents (only agents with low media literacy can benefit from the intervention)
+            benefiting_agents = [agent for agent in selected_agents if agent.media_literacy.__eq__(MediaLiteracy.LOW)]
+
+            for agent in benefiting_agents:
+                agent.media_literacy = MediaLiteracy.HIGH
+
+    def select_agents_for_media_literacy_intervention(self, n_select=0, select_by=SelectAgentsBy.RANDOM):
+        """
+        Select agents for the intervention.
+        :param n_select:    int, how many agents should be selected for the intervention
+        :param select_by:   SelectBy(Enum), selection method, e.g. SelectBy.RANDOM
+        :return:            list of agents, [(Base)Agent, (Base)Agent, ...]
+        """
+        selected_agents = []
+        if select_by.__eq__(SelectAgentsBy.RANDOM):
+            selected_agents = random.choices(self.schedule.agents, k=n_select)
+        else:
+            print(f'ERROR: Selection style not yet implemented. '
+                  f'To sample which agents will be empowered by the media literacy intervention,'
+                  f'Please use an agent selection style that has already been implemented. (e.g. random)')
+
+        return selected_agents
 
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
