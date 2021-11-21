@@ -5,7 +5,7 @@ from scipy.stats import skewnorm
 
 class Post:
 
-    def __init__(self, unique_id, stances={}):  # , factcheck_result=False):
+    def __init__(self, unique_id, stances={}):
         self.unique_id = unique_id
         self.stances = stances  # stances represented in the post. {Topic: int_belief}
         self.factcheck_result = random.choice([result for result in FactCheckResult])
