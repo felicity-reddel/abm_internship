@@ -13,7 +13,16 @@ import matplotlib.pyplot as plt
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=2):
+    def __init__(self, n_agents, n_edges=2, media_literacy_intervention=0.0):
+        """
+        Initializes the MisinfoModel
+        :param n_agents: int, how many agents the model should have
+        :param n_edges: int, with how many edges gets attached to the already built network
+        :param media_literacy_intervention: float, domain [0,1),
+                Percentage of agents empowered by media literacy intervention.
+                If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
+                If 1.0: everybody is empowered by it.
+        """
         super().__init__()
         self.n_agents = n_agents
         self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
@@ -24,6 +33,8 @@ class MisinfoModel(Model):
                             'n_following_range': (0, 0)}
         self.init_agents()
         self.init_followers_and_following()
+
+        self.apply_media_literacy_intervention(media_literacy_intervention)
 
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,
@@ -57,7 +68,7 @@ class MisinfoModel(Model):
         Return average belief of all agents on a given topic. For the DataCollector.
         :return:        float
         """
-        topic = Topic.VAX
+        topic = str(Topic.VAX)
 
         agent_beliefs = [a.beliefs[topic] for a in self.schedule.agents]
         avg_belief = sum(agent_beliefs) / len(agent_beliefs)
@@ -118,7 +129,7 @@ class MisinfoModel(Model):
          For the DataCollector.
         :return: float
         """
-        topic = Topic.VAX
+        topic = str(Topic.VAX)
         threshold = 50.0
 
         beliefs_above_threshold = [a.beliefs[topic] for a in self.schedule.agents if a.beliefs[topic] >= threshold]
@@ -134,7 +145,7 @@ class MisinfoModel(Model):
          For the DataCollector.
         :return: float
         """
-        topic = Topic.VAX
+        topic = str(Topic.VAX)
         threshold = 50.0
 
         beliefs_below_threshold = [a.beliefs[topic] for a in self.schedule.agents if a.beliefs[topic] < threshold]
@@ -156,8 +167,8 @@ class MisinfoModel(Model):
         # get_vax_beliefs = []
         # for agent in self.schedule.agents:
         #     get_vax_beliefs += agent.beliefs[Topic.VAX]
-
-        vax_beliefs = [agent.beliefs[Topic.VAX] for agent in self.schedule.agents]
+        topic = str(Topic.VAX)
+        vax_beliefs = [agent.beliefs[topic] for agent in self.schedule.agents]
 
         return vax_beliefs
     
@@ -167,44 +178,44 @@ class MisinfoModel(Model):
         :param agent_ids_list: list of agent.unique_id's
         :return: dict, {unique_id: vax_belief}
         """
-        
+        topic = str(Topic.VAX)
         vax_beliefs: dict[str, float] = {}
-        # for id in agent_ids_list:
-        #     agent = self.schedule.agents[id]
-        #     belief = agent.beliefs[Topic.VAX]
-        #     vax_beliefs[f'belief of agent {id}'] = belief
-
         agents = [a for a in self.schedule.agents if a.unique_id in agent_ids_list]
         for agent in agents:
-            belief = agent.beliefs[Topic.VAX]
+            belief = agent.beliefs[topic]
             vax_beliefs[f'belief of agent {id}'] = belief
         
         return vax_beliefs
 
 # Hard-coded because programmatic attempt didn't work out. (see Trello)
     def get_vax_belief_0(self, dummy) -> float:
+        topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 0][0]
-        belief = agent_i.beliefs[Topic.VAX]
+        belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_25(self, dummy) -> float:
+        topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 25][0]
-        belief = agent_i.beliefs[Topic.VAX]
+        belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_50(self, dummy) -> float:
+        topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 50][0]
-        belief = agent_i.beliefs[Topic.VAX]
+        belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_75(self, dummy) -> float:
+        topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 75][0]
-        belief = agent_i.beliefs[Topic.VAX]
+        belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_99(self, dummy) -> float:
+        topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 99][0]
-        belief = agent_i.beliefs[Topic.VAX]
+        belief = agent_i.beliefs[topic]
         return belief
 # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
@@ -253,6 +264,27 @@ class MisinfoModel(Model):
         # Save ranges into agents_data
         self.agents_data["n_following_range"] = (min_n_following, max_n_following)
         self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
+
+    def apply_media_literacy_intervention(self, media_literacy_intervention):
+        """
+        Applies the media literacy intervention (if needed).
+        :param media_literacy_intervention: float, [0,1),
+                    Percentage of agents empowered by media literacy intervention.
+                    If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
+                    If 1.0: everybody is empowered by it.
+        """
+        # If media literacy intervention is used:
+        # (i.e., if some percentage of agents is targeted with it)
+        if media_literacy_intervention > 0.0:
+            # Gather agents that could benefit from the intervention
+            agents_ml_low = [agent for agent in self.schedule.agents if agent.media_literacy.__eq__(MediaLiteracy.LOW)]
+            # EXT: maybe switch to random.choice mli_target_percent
+
+            for agent in agents_ml_low:
+                # Sample whether to increase this agent's media literacy
+                will_increase = random.random() <= media_literacy_intervention
+                if will_increase:
+                    agent.media_literacy = MediaLiteracy.HIGH
 
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––

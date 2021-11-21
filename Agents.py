@@ -3,6 +3,20 @@ from mesa import Agent
 from Posts import *
 
 
+class MediaLiteracy(Enum):
+    """
+    Media Literacy Levels
+    """
+    def __eq__(self, o: object) -> bool:
+        if self.value is o.value:
+            return True
+        else:
+            return False
+
+    LOW = 0
+    HIGH = 1
+
+
 class BaseAgent(Agent):
     """Most simple agent to start with."""
 
@@ -11,10 +25,10 @@ class BaseAgent(Agent):
 
         self.beliefs = {}
         self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
+        self.media_literacy = random.choice([level for level in MediaLiteracy])
         self.init_beliefs()
         self.followers = []
         self.following = []
-        self.will_post = True if random.random() < self.tendency_to_share else False
         self.received_posts = []
         self.last_posts = []  # currently: all posts
 
@@ -37,12 +51,12 @@ class BaseAgent(Agent):
                 follower.received_posts.append((post, self))  # self = source of post
 
     def update_beliefs_stage(self):
+
         if len(self.received_posts) > 0:
             # Do the update
-            # self.update_beliefs_avg()
             self.update_beliefs_simple_sit()
 
-        # empty self.received_posts again
+        # empty received_posts again
         self.received_posts = []
 
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
@@ -69,44 +83,49 @@ class BaseAgent(Agent):
             # Prepare updates dict (to update after each seen post)
             updates = {}
             for topic in Topic:
-                updates[topic] = 0
+                updates[str(topic)] = 0
 
-            for topic, post_value in post.stances.items():
-                prev_belief = self.beliefs[topic]
+            post_judged_as_truthful = self.judge_truthfulness(post)
 
-                # Calculate SIT components
-                strength = self.calculate_strength(post, source)  # avg(relative n_followers, belief_similarity)
-                # belief_similarity: between own_beliefs and source's_beliefs
-                immediacy = self.calculate_immediacy(source)  # tie_strength
-                n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
+            # Only update on post if it is thought to be truthful
+            if post_judged_as_truthful:
+                for topic, post_value in post.stances.items():
+                    prev_belief = self.beliefs[topic]
 
-                # Combine components
-                social_impact = strength * immediacy * n_sources
+                    # Calculate SIT components
+                    strength = self.calculate_strength(post, source)  # avg(relative n_followers, belief_similarity)
+                    # belief_similarity: between own_beliefs and source's_beliefs
+                    immediacy = self.calculate_immediacy(source)  # tie_strength
+                    n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
 
-                # Rescaling such that:
-                # the maximal decrease results in a belief of 0, and
-                # the maximal increase results in a belief of 100.
-                max_decrease = -1 * prev_belief
-                max_increase = 100 - prev_belief
-                rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
+                    # Combine components
+                    social_impact = strength * immediacy * n_sources
 
-                # Calculate update elasticity
-                update_elasticity = self.calculate_update_elasticity(prev_belief)
+                    # Rescaling such that:
+                    # the maximal decrease results in a belief of 0, and
+                    # the maximal increase results in a belief of 100.
+                    max_decrease = -1 * prev_belief
+                    max_increase = 100 - prev_belief
+                    rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
 
-                # Calculate update for belief on topic
-                update = rescaled_social_impact * update_elasticity
-                updates[topic] += update
+                    # Calculate update elasticity
+                    update_elasticity = self.calculate_update_elasticity(prev_belief)
 
-                if self.unique_id == 0:
-                    print(f'prev_belief: {prev_belief} \n'
-                          f'update_elasticity: {update_elasticity} \n'
-                          f'social impact: {rescaled_social_impact} \n'
-                          f'update: {update} \n')
+                    # Calculate update for belief on topic
+                    update = rescaled_social_impact * update_elasticity
+                    updates[topic] += update
 
-            # Update own beliefs  (after each seen post)
-            for topic, update in updates.items():
-                prev_belief = self.beliefs[topic]
-                self.beliefs[topic] = prev_belief + update
+                    # Validation
+                    # if self.unique_id == 0:
+                    #     print(f'prev_belief: {prev_belief} \n'
+                    #           f'update_elasticity: {update_elasticity} \n'
+                    #           f'social impact: {rescaled_social_impact} \n'
+                    #           f'update: {update} \n')
+
+                # Update own beliefs  (after each seen post)
+                for topic, update in updates.items():
+                    prev_belief = self.beliefs[topic]
+                    self.beliefs[topic] = prev_belief + update
 
     def init_beliefs(self):
         """
@@ -114,7 +133,7 @@ class BaseAgent(Agent):
         :return:
         """
         for topic in Topic:
-            self.beliefs[topic] = self.random.randint(0, 100)
+            self.beliefs[str(topic)] = self.random.randint(0, 100)
 
     def create_post(self, based_on_beliefs=True):
         """
@@ -349,6 +368,25 @@ class BaseAgent(Agent):
         max_elasticity = normal_distribution(x=mean)
         update_elasticity = y / max_elasticity
         return update_elasticity
+
+    def judge_truthfulness(self, post):
+        """
+        Simple version of judging the truthfulness of a post.
+        Agents with high media literacy judge true posts as true, and false posts as false.
+        Agents with low media literacy judge all posts as true.
+        :param post: Post
+        :return: boolean, whether the post is judged as true or false
+        """
+
+        # A post is only judged as NOT truthful if:
+        #       - the post's factcheck_result is false
+        #   AND
+        #       - the agent's media literacy is high
+        judged_truthfulness = True
+        if self.media_literacy.__eq__(MediaLiteracy.HIGH) and post.factcheck_result.__eq__(FactCheckResult.FALSE):
+            judged_truthfulness = False
+
+        return judged_truthfulness
 
 
 def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(-100, 100)):

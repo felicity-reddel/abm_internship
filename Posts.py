@@ -5,10 +5,10 @@ from scipy.stats import skewnorm
 
 class Post:
 
-    def __init__(self, unique_id, stances={}, factcheck_result=False):
+    def __init__(self, unique_id, stances={}):  # , factcheck_result=False):
         self.unique_id = unique_id
         self.stances = stances  # stances represented in the post. {Topic: int_belief}
-        # self.factcheck_result = factcheck_result
+        self.factcheck_result = random.choice([result for result in FactCheckResult])
 
     @staticmethod
     def sample_stances(max_n_topics=1, based_on_agent=None, skew=4) -> dict:
@@ -31,7 +31,7 @@ class Post:
 
             # Pick topic
             topics = [topic for topic in Topic]
-            topic = random.choice(topics)  # Ext: could adjust weights for diff. topics
+            topic = str(random.choice(topics))  # Ext: could adjust weights for diff. topics
 
             # Sample value on topic
             if based_on_agent:
@@ -47,7 +47,35 @@ class Post:
 
 
 class Topic(Enum):
+    """
+    Implemented Topics (for stances of posts & beliefs of agents).
+    Easily extendable to include more topics (e.g., MASKS, EVOLUTION, etc.)
+    """
+    def __eq__(self, o: object) -> bool:
+        if self.value is o.value:
+            return True
+        else:
+            return False
+
     VAX = 1
+
+
+class FactCheckResult(Enum):
+    """
+    Enumeration representing the a factcheck would have.
+    """
+    """
+    Implemented factcheck results. 
+    Easily extendable to include more options (e.g., MISLEADING)
+    """
+    def __eq__(self, o: object) -> bool:
+        if self.value is o.value:
+            return True
+        else:
+            return False
+
+    TRUE = 1
+    FALSE = 2
 
 
 def adjust_skew(current_belief, skew):

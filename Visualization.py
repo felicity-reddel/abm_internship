@@ -10,7 +10,7 @@ from Posts import *
 
 
 def get_node_color(agent):
-    belief = agent.beliefs[Topic.VAX]
+    belief = agent.beliefs[str(Topic.VAX)]
     # Map belief value to color value
     # with PiYG, a diverging colormap:
     #       100 --> green
@@ -93,7 +93,7 @@ def show_visualization(model):
     server = ModularServer(model,  # class name
                            [network, chart_avg_belief, chart_indiv_belief],
                            'Misinfo Model',  # title
-                           {'n_agents': 100})  # model parameters
+                           {'n_agents': 100, 'n_edges': 2, 'media_literacy_intervention': 0.0})  # model parameters
 
     server.port = 8521  # The default
     server.launch()
