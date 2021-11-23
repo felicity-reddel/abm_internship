@@ -12,7 +12,7 @@ class Post:
             self.stances = {}
         else:
             self.stances = stances  # stances represented in the post. {Topic: int_belief}
-        self.visibility = self.estimate_engagement()
+        self.visibility = self.estimate_visibility()
         self.factcheck_result = FactCheckResult.get_random()  # currently: TRUE or FALSE
 
     @staticmethod
@@ -35,8 +35,7 @@ class Post:
         for m in range(n_topics):
 
             # Pick topic
-            topics = [topic for topic in Topic]
-            topic = str(random.choice(topics))  # Ext: could adjust weights for diff. topics
+            topic = str(Topic.get_random())  # Ext: could adjust weights for diff. topics
 
             # Sample value on topic
             if based_on_agent:
@@ -50,7 +49,7 @@ class Post:
 
         return stances
 
-    def estimate_engagement(self):
+    def estimate_visibility(self):
         """
         Estimates the visibility of the post.
         Here: just the extremeness of its stances

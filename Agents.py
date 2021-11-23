@@ -58,6 +58,7 @@ class BaseAgent(Agent):
 
                     # Update beliefs
                     self.update_beliefs_simple_sit(post)
+                    # self.update_beliefs_avg(post)
 
         # empty received_posts again
         self.received_posts = []
@@ -66,18 +67,15 @@ class BaseAgent(Agent):
     #   General Helper-Functions
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-    def update_beliefs_avg(self):
+    def update_beliefs_avg(self, post):
         """
-        Simplest update_beliefs function. Based on received posts in this step/tick.
+        Simplest update_beliefs function.
         New belief is average between own previous belief and the post's stance on the topic.
         """
-
-        for post, _ in self.received_posts:
-
-            # Update towards post's stances
-            for topic, value in post.stances.items():
-                prev_belief = self.beliefs[topic]
-                self.beliefs[topic] = (prev_belief + value) / 2
+        # Update towards post's stances
+        for topic, value in post.stances.items():
+            prev_belief = self.beliefs[topic]
+            self.beliefs[topic] = (prev_belief + value) / 2
 
     def update_beliefs_simple_sit(self, post):
         """
@@ -136,26 +134,6 @@ class BaseAgent(Agent):
 
         print("Agent " + str(self.unique_id) + ": " + str(self.beliefs[Topic.VAX])
               + " --> " + decision)
-
-    def get_neighbors(self, node=None) -> list:  # list of agents
-        """
-        Returns all neighbor-agents of a node. If no specific node is provided, the own neighbors are returned.
-        :return:    list of agents in neighboring nodes
-        """
-
-        # Get neighboring nodes  (i.e., list of their ids, integers)
-        if not node:  # If no node provided, get own neighbors.
-            neighbor_nodes = self.model.grid.get_neighbors(self.unique_id)
-        else:
-            neighbor_nodes = self.model.grid.get_neighbors(node)
-
-        # Get agents from neighboring nodes
-        neighbor_agents = []
-        for (_, agent) in self.model.G.nodes.data("agent"):
-            if agent.pos in neighbor_nodes:
-                neighbor_agents.append(agent)
-
-        return neighbor_agents
 
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     #   Toy Interaction: 1-on-1, Certainty-based update. Without Posts.

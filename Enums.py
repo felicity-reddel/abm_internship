@@ -17,6 +17,11 @@ class Topic(Enum):
     # MASKS = 1
     # EVOLUTION = 2
 
+    @staticmethod
+    def get_random():
+        result = random.choice(list(Topic))
+        return result
+
 
 class FactCheckResult(Enum):
     """
