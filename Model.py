@@ -3,10 +3,8 @@ from mesa.datacollection import DataCollector
 from mesa.time import StagedActivation
 from mesa.space import NetworkGrid
 import networkx as nx
-import matplotlib.pyplot as plt
 
 from Agents import *
-from Posts import *
 from Enums import *
 
 
@@ -66,6 +64,97 @@ class MisinfoModel(Model):
         self.data_collector2.collect(self)
 
     # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # Init functions
+    # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+    def init_agents(self):
+        """Initializes the agents."""
+        for i in range(self.n_agents):
+            a = BaseAgent(i, self)
+            self.schedule.add(a)
+
+        # Place each agent in its node. (& save node_position into agent)
+        for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
+            agent = self.schedule.agents[node]
+
+            # save node_position into agent
+            self.grid.place_agent(agent, node)
+
+            # add agent to node
+            self.G.nodes[node]['agent'] = agent
+
+    def init_followers_and_following(self):
+        """Initializes the followers and following of each agent."""
+        n_followers_list = []
+        n_following_list = []
+
+        # Init followers & following (after all agents have been set up)
+        for agent in self.schedule.agents:
+            # Gather connected agents
+            predecessors = [self.schedule.agents[a] for a in self.G.predecessors(agent.unique_id)]
+            successors = [self.schedule.agents[a] for a in self.G.successors(agent.unique_id)]
+
+            # Assign to this agent
+            agent.following = predecessors
+            agent.followers = successors
+
+            # Gather number of followers/following to this agent
+            n_following_list.append(len(agent.following))
+            n_followers_list.append(len(agent.followers))
+
+            # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
+            # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
+
+        # Gather boundaries of ranges (n_followers & n_following)
+        min_n_following = min(n_following_list)
+        max_n_following = max(n_following_list)
+        min_n_followers = min(n_followers_list)
+        max_n_followers = max(n_followers_list)
+
+        # Save ranges into agents_data
+        self.agents_data["n_following_range"] = (min_n_following, max_n_following)
+        self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
+
+    def apply_media_literacy_intervention(self, media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM)):
+        """
+        Applies the media literacy intervention (if needed).
+        :param media_literacy_intervention: float, [0,1),
+                    Percentage of agents empowered by media literacy intervention.
+                    If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
+                    If 1.0: everybody is empowered by it.
+        """
+        percentage, select_by = media_literacy_intervention
+
+        # If media literacy intervention is used: select agents for intervention, adjust their media literacy.
+        # (i.e., if some percentage of agents is targeted with it)
+        if percentage > 0.0:
+            n_select = int(len(self.schedule.agents) * percentage)
+            selected_agents = self.select_agents_for_media_literacy_intervention(n_select, select_by)
+
+            # Benefiting agents (only agents with low media literacy can benefit from the intervention)
+            benefiting_agents = [agent for agent in selected_agents if agent.media_literacy.__eq__(MediaLiteracy.LOW)]
+
+            for agent in benefiting_agents:
+                agent.media_literacy = MediaLiteracy.HIGH
+
+    def select_agents_for_media_literacy_intervention(self, n_select=0, select_by=SelectAgentsBy.RANDOM):
+        """
+        Select agents for the intervention.
+        :param n_select:    int, how many agents should be selected for the intervention
+        :param select_by:   SelectBy(Enum), selection method, e.g. SelectBy.RANDOM
+        :return:            list of agents, [(Base)Agent, (Base)Agent, ...]
+        """
+        selected_agents = []
+        if select_by.__eq__(SelectAgentsBy.RANDOM):
+            selected_agents = random.choices(self.schedule.agents, k=n_select)
+        else:
+            print(f'ERROR: Selection style not yet implemented. '
+                  f'To sample which agents will be empowered by the media literacy intervention,'
+                  f'Please use an agent selection style that has already been implemented. (e.g. random)')
+
+        return selected_agents
+
+    # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     # DataCollector functions
     # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     def get_avg_vax_belief(self, dummy) -> float:  # dummy parameter: to avoid error
@@ -80,7 +169,7 @@ class MisinfoModel(Model):
 
         return avg_belief
 
-    def get_vax_category_sizes(self, dummy) -> tuple:
+    def get_vax_category_sizes(self, dummy) -> tuple:  # dummy parameter: to avoid error
         """
         Return tuple of how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
@@ -112,7 +201,7 @@ class MisinfoModel(Model):
 
         return n_above
 
-    def get_below_vax_threshold(self, dummy) -> int:
+    def get_below_vax_threshold(self, dummy) -> int:  # dummy parameter: to avoid error
         """
         Returns how many agents' belief on a given topic is above and below the provided threshold.
          For the DataCollector.
@@ -194,139 +283,73 @@ class MisinfoModel(Model):
 
     # Hard-coded because programmatic attempt didn't work out. (see Trello)
     def get_vax_belief_0(self, dummy) -> float:
+        """
+        Returns the belief of agent 0 at current tick.
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
         topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 0][0]
         belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_25(self, dummy) -> float:
+        """
+        Returns the belief of agent 25 at current tick.
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
         topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 25][0]
         belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_50(self, dummy) -> float:
+        """
+        Returns the belief of agent 50 at current tick.
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
         topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 50][0]
         belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_75(self, dummy) -> float:
+        """
+        Returns the belief of agent 75 at current tick.
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
         topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 75][0]
         belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_99(self, dummy) -> float:
+        """
+        Returns the belief of agent 99 at current tick.
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
         topic = str(Topic.VAX)
         agent_i = [a for a in self.schedule.agents if a.unique_id == 99][0]
         belief = agent_i.beliefs[topic]
         return belief
-    # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-
-    def init_agents(self):
-        for i in range(self.n_agents):
-            a = BaseAgent(i, self)
-            self.schedule.add(a)
-
-        # Place each agent in its node. (& save node_position into agent)
-        for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
-            agent = self.schedule.agents[node]
-
-            # save node_position into agent
-            self.grid.place_agent(agent, node)
-
-            # add agent to node
-            self.G.nodes[node]['agent'] = agent
-
-    def init_followers_and_following(self):
-        n_followers_list = []
-        n_following_list = []
-
-        # Init followers & following (after all agents have been set up)
-        for agent in self.schedule.agents:
-            # Gather connected agents
-            predecessors = [self.schedule.agents[a] for a in self.G.predecessors(agent.unique_id)]
-            successors = [self.schedule.agents[a] for a in self.G.successors(agent.unique_id)]
-
-            # Assign to this agent
-            agent.following = predecessors
-            agent.followers = successors
-
-            # Gather number of followers/following to this agent
-            n_following_list.append(len(agent.following))
-            n_followers_list.append(len(agent.followers))
-
-            # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
-            # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
-
-        # Gather boundaries of ranges (n_followers & n_following)
-        min_n_following = min(n_following_list)
-        max_n_following = max(n_following_list)
-        min_n_followers = min(n_followers_list)
-        max_n_followers = max(n_followers_list)
-
-        # Save ranges into agents_data
-        self.agents_data["n_following_range"] = (min_n_following, max_n_following)
-        self.agents_data["n_followers_range"] = (min_n_followers, max_n_followers)
-
-    def apply_media_literacy_intervention(self, media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM)):
-        """
-        Applies the media literacy intervention (if needed).
-        :param media_literacy_intervention: float, [0,1),
-                    Percentage of agents empowered by media literacy intervention.
-                    If 0.0: nobody is empowered by it, i.e., no media literacy intervention.
-                    If 1.0: everybody is empowered by it.
-        """
-        percentage, select_by = media_literacy_intervention
-
-        # If media literacy intervention is used: select agents for intervention, adjust their media literacy.
-        # (i.e., if some percentage of agents is targeted with it)
-        if percentage > 0.0:
-            n_select = int(len(self.schedule.agents) * percentage)
-            selected_agents = self.select_agents_for_media_literacy_intervention(n_select, select_by)
-
-            # Benefiting agents (only agents with low media literacy can benefit from the intervention)
-            benefiting_agents = [agent for agent in selected_agents if agent.media_literacy.__eq__(MediaLiteracy.LOW)]
-
-            for agent in benefiting_agents:
-                agent.media_literacy = MediaLiteracy.HIGH
-
-    def select_agents_for_media_literacy_intervention(self, n_select=0, select_by=SelectAgentsBy.RANDOM):
-        """
-        Select agents for the intervention.
-        :param n_select:    int, how many agents should be selected for the intervention
-        :param select_by:   SelectBy(Enum), selection method, e.g. SelectBy.RANDOM
-        :return:            list of agents, [(Base)Agent, (Base)Agent, ...]
-        """
-        selected_agents = []
-        if select_by.__eq__(SelectAgentsBy.RANDOM):
-            selected_agents = random.choices(self.schedule.agents, k=n_select)
-        else:
-            print(f'ERROR: Selection style not yet implemented. '
-                  f'To sample which agents will be empowered by the media literacy intervention,'
-                  f'Please use an agent selection style that has already been implemented. (e.g. random)')
-
-        return selected_agents
 
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 #   Graph Functions
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-def toy_graph() -> nx.Graph:
-    """ Generates and returns simple toy-G of 4 nodes."""
-    # Simple G to test compatibility
-    graph = nx.Graph()  # Later: potentially adjust in style to later code. i.e., self.G
-    graph.add_nodes_from([0, 1, 2, 3])
-    graph.add_edges_from([(0, 1), (0, 2), (0, 3)])
-    print(f"G's nodes: \n {str(graph[0])}, \n {str(graph[1])}, \n {str(graph[2])}, \n {str(graph[3])}")
-    return graph
-
-
 def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
     """
-
+    Generates a random graph a la Barabasi Albert.
     :param n_nodes:     int, number of nodes
     :param m:           int, avg number of edges added per node
     :param seed:        int, random seed
@@ -340,8 +363,6 @@ def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
     # FYI:      n=10, m=3, doesn't create 30 edges, but only e.g., 21. Not each node has 3 edges.
     """
     graph = nx.barabasi_albert_graph(n_nodes, m, seed)
-    # print(f'graph edges: {graph.edges}')
-    # print(f'len graph edges: {len(graph.edges)}')
 
     if directed:  # --> has key
         # Make graph directed (i.e., asymmetric edges possible = multiple directed edges)
@@ -368,19 +389,3 @@ def random_graph(n_nodes, m, seed=None, directed=True) -> nx.Graph:
             graph.edges[from_e, to_e]['weight'] = weight
 
     return graph
-
-
-def draw_graph(graph):
-    """ Draw G G with specified options."""
-    size = 4
-    options = {
-        'node_color': 'lightgray',
-        'node_size': 100 * size,
-        'width': 3,
-        'edge_color': 'black',
-        'edgecolors': 'black',
-        'font_size': 10
-    }
-
-    nx.draw(graph, with_labels=True, font_weight='bold', **options)
-    plt.show()

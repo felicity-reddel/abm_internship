@@ -58,24 +58,13 @@ class BaseAgent(Agent):
 
                     # Update beliefs
                     self.update_beliefs_simple_sit(post)
-                    # self.update_beliefs_avg(post)
 
         # empty received_posts again
         self.received_posts = []
 
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    #   General Helper-Functions
+    #  Simple SIT Belief-update
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-
-    def update_beliefs_avg(self, post):
-        """
-        Simplest update_beliefs function.
-        New belief is average between own previous belief and the post's stance on the topic.
-        """
-        # Update towards post's stances
-        for topic, value in post.stances.items():
-            prev_belief = self.beliefs[topic]
-            self.beliefs[topic] = (prev_belief + value) / 2
 
     def update_beliefs_simple_sit(self, post):
         """
@@ -93,266 +82,6 @@ class BaseAgent(Agent):
         for topic, update in updates.items():
             prev_belief = self.beliefs[topic]
             self.beliefs[topic] = prev_belief + update
-
-    def init_beliefs(self):
-        """
-        Initialize for each topic a random belief.
-        :return:
-        """
-        for topic in Topic:
-            self.beliefs[str(topic)] = self.random.randint(0, 100)  # TODO: Uniform --> Bimodal(20,80)
-
-    def create_post(self, based_on_beliefs=True):
-        """
-        Creates a new post. Either random or based on own stances.
-        :return: Post
-        """
-        # Get post_id & post's stances
-        id = self.model.post_id_counter
-        # Increase post_id_counter
-        self.model.post_id_counter += 1
-
-        if based_on_beliefs:
-            stances = Post.sample_stances(based_on_agent=self)
-        else:
-            stances = Post.sample_stances()
-
-        # Create post
-        post = Post(id, source=self, stances=stances)
-
-        return post
-
-    def print_vax_decision(self, threshold=50.0):
-        """
-        Print the vaccination_willingness value and the corresponding decision.
-        :param threshold:   float, decision-threshold for/against getting vaccinated
-        """
-        # Print value and decision
-        decision = "vaccine"
-        if self.beliefs[Topic.VAX] <= threshold:
-            decision = "NO VACCINE !!1!"
-
-        print("Agent " + str(self.unique_id) + ": " + str(self.beliefs[Topic.VAX])
-              + " --> " + decision)
-
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    #   Toy Interaction: 1-on-1, Certainty-based update. Without Posts.
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-
-    def toy_interaction(self):
-        """ Toy interaction step method.
-        An agent only interacts with one randomly selected neighbor.
-        The agent who was less certain updates very strongly towards the more certain agent's belief.
-        The agent who was more certain becomes even a bit more certain (due to the strong update of the other agent)."""
-
-        # Pick neighbor
-        neighbors = self.neighbors
-        other_agent = self.random.choice(neighbors)
-        # Determine who is more certain
-        more_certain_agent, less_certain_agent = self.get_more_certain_agent(other_agent)
-        # Update stances accordingly
-        self.toy_update_beliefs(more_certain_agent, less_certain_agent)
-
-    def get_more_certain_agent(self, other_agent):
-        """ For toy_interaction. Determine which agent is more/less certain and return them. """
-        # Determine which agent was more certain
-        # more certain --> further away from middle (i.e., from 50)
-        more_certain_agent = other_agent
-        less_certain_agent = self
-        if abs(self.beliefs[Topic.VAX] - 50) > abs(other_agent.beliefs[Topic.VAX] - 50):
-            more_certain_agent = self
-            less_certain_agent = other_agent
-        return more_certain_agent, less_certain_agent
-
-    @staticmethod
-    def toy_update_beliefs(more_certain_agent, less_certain_agent):
-        """ For toy_interaction. Determine new belief-values and assign them for both agents.
-        :type more_certain_agent: agent object, agent with more extreme belief
-        :type less_certain_agent: agent object, agent with less extreme belief
-        """
-        # Update agents' stances
-        # was less certain --> update to average belief of both agents
-        less_certain_agent.beliefs[Topic.VAX] = round(
-            (more_certain_agent.beliefs[Topic.VAX] + less_certain_agent.beliefs[Topic.VAX]) / 2)
-        # was more certain --> become even more certain of belief
-        if more_certain_agent.beliefs[Topic.VAX] >= 50:
-            more_certain_agent.beliefs[Topic.VAX] = more_certain_agent.beliefs[Topic.VAX] + 1
-            # Introduce upper-bound of 100
-            # = min(100, more_certain_agent.beliefs[Topic.VAX] + 1)
-        else:
-            more_certain_agent.beliefs[Topic.VAX] = more_certain_agent.beliefs[Topic.VAX] - 1
-            # Introduce lower-bound of 0
-            # = max(0, more_certain_agent.beliefs[Topic.VAX] - 1)
-
-    # Lesson from Toy:
-    # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
-    #   Either all/most agents get the vaccine or all/most don't. Very extreme values.
-
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    #  Toy Interaction: Many-on-1, Average-based update. Without Posts.
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-
-    def toy_adjust_to_average(self):
-        # Get neighbors' stances
-        neighbors_beliefs = [neighbor.beliefs[Topic.VAX] for neighbor in self.neighbors]
-
-        # Update own belief towards average neighbor-belief
-        avg_neighbor_belief = sum(neighbors_beliefs) / len(neighbors_beliefs)
-        self.beliefs[Topic.VAX] = (self.beliefs[Topic.VAX] + avg_neighbor_belief) / 2
-
-    # Lesson from toy_adjust_to_average:
-    # - Outcome strongly depends on initial conditions, i.e., initial belief distribution (randomly sampled here).
-    #   Either all/most agents get the vaccine or all/most don't. Moderate values.
-
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    #  Simple SIT Belief-update
-    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-
-    def get_relative_n_followers(self, source):
-        """
-        Normalizes n_followers of agent.
-        If 0.0: least n_followers in network.
-        If 100.0: most n_followers in network.
-        :return:    relative_n_followers    float   percentile
-        """
-        n_followers = len(list(self.model.G.successors(source.unique_id)))
-        min_followers, max_followers = self.model.agents_data["n_followers_range"]
-
-        relative_n_followers = (n_followers - min_followers) / (max_followers - min_followers)
-        relative_n_followers = relative_n_followers * 100
-
-        return relative_n_followers
-
-    def calculate_strength(self, post):
-        """
-        Calculates the strength component for the SIT belief update. In this case a combination of
-        the relative number of followers and the belief_similarity between own belief & estimated belief of source.
-        The other person's beliefs are estimated by looking at the stances of their last posts.
-        :param post:        current post by other person (i.e., source)
-        :return:            strength    float
-        """
-        rel_n_followers = self.get_relative_n_followers(post.source)
-        belief_similarity = self.estimate_belief_similarity(post)
-        strength = (rel_n_followers + belief_similarity)/2
-
-        return strength
-
-    def calculate_immediacy(self, post):
-        """
-        Calculates immediacy component for the SIT belief update as  tie strength (i.e., edge weight).
-        :return:            immediacy value
-        """
-
-        tie_strength = self.model.G.edges[self.unique_id, post.source.unique_id, 0]['weight']  # Always key=0 because
-        # maximally one connection in this direction possible.
-        immediacy = tie_strength
-
-        return immediacy
-
-    def estimate_belief_similarity(self, post):
-        """
-        For the immediacy component of the SIT belief update, estimate the belief similarity of self to other agent
-        (only considering topics in this post).
-        # EXTENSION: could also consider all topics mentioned in their last posts
-        :param post:    Post
-        :return:        float, similarity estimate
-        """
-        # Estimate other person's beliefs (on topics in current post)
-        estimated_beliefs = {}
-
-        for topic, value in post.stances.items():
-            # Estimate their belief on 'topic' by looking at their last posts
-            values = []
-            for post in post.source.last_posts:
-                if topic in post.stances:
-                    value = post.stances[topic]
-                    values.append(value)
-            estimated_beliefs[topic] = sum(values) / len(values)
-
-        # Calculate belief similarity (on beliefs in current post)
-        similarities = []
-        for topic, _ in post.stances.items():
-            similarity = 100 - abs(self.beliefs[topic] - estimated_beliefs[topic])
-            similarities.append(similarity)
-        belief_similarity = sum(similarities) / len(similarities)
-
-        return belief_similarity
-
-    def calculate_n_sources(self):
-        """
-        For the immediacy component of the SIT belief update, calculates the factor n_sources. The more accounts a user
-        is following, the less they will update their beliefs based on each single one of them.
-        :return:    float
-        """
-        n_following = len(self.following)
-        n_sources = (1.0 / n_following) * 100
-
-        return n_sources
-
-    @staticmethod
-    def calculate_update_elasticity(prev_belief, belief_domain=(0, 100), std_dev=30.0):
-        """
-        Calculates the update elasticity of an agent given its previous belief.
-        Needed because it takes more until someone updates away from a belief in which they have high confidence
-        (i.e., belief close extremes of the belief_domain). Beliefs don't update from e.g., 99 --> 20 due to one post.
-        Analogously, when someone has low confidence in a belief (i.e., close to middle of belief_domain),
-        it makes sense that they update more per post.
-
-        :param prev_belief:             float, previous belief of an agent  (domain: belief_domain)
-        :param belief_domain:           tuple, (min, max)
-        :param std_dev:                 float or int                        (domain: belief_domain)
-        :return: update_elasticity:     float                               (domain: [0,1])
-        """
-        x = prev_belief
-        min_belief, max_belief = belief_domain
-        mean = float(min_belief + max_belief)/2
-        y = normal_distribution(x, mean, std_dev)
-
-        # Scale y, such that at middle (e.g., 50), the update elasticity is 1:
-        max_elasticity = normal_distribution(x=mean)
-        update_elasticity = y / max_elasticity
-        return update_elasticity
-
-    def judge_truthfulness(self, post):
-        """
-        Simple version of judging the truthfulness of a post.
-        Agents with high media literacy judge true posts as true, and false posts as false.
-        Agents with low media literacy judge all posts as true.
-        :param post: Post
-        :return: boolean, whether the post is judged as true or false
-        """
-
-        # A post is only judged as NOT truthful if:
-        #       - the post's factcheck_result is false
-        #   AND
-        #       - the agent's media literacy is high
-        judged_truthfulness = True
-        if self.media_literacy.__eq__(MediaLiteracy.HIGH) and post.factcheck_result.__eq__(FactCheckResult.FALSE):
-            judged_truthfulness = False
-
-        return judged_truthfulness
-
-    def sample_seen_posts(self):
-        """
-        Sample which of the received posts are actually seen/consumed by the agent.
-        Result depends on the ranking implementation and whether the ranking intervention is applied.
-        :return: list of seen posts: [Post]
-        """
-        seen_posts = []
-
-        for post in self.received_posts:
-
-            # If ranking intervention, update the post's visibility.
-            if self.model.ranking_intervention:
-                print('DIFFERENT RANKING!')
-                post.visibility *= post.factcheck_result.value
-
-            # "Coin toss"
-            random_nr = random.random()
-            if random_nr < post.visibility:
-                seen_posts.append(post)
-
-        return seen_posts
 
     def calculate_belief_update(self, post) -> dict:
         """
@@ -403,6 +132,201 @@ class BaseAgent(Agent):
 
         return updates
 
+    def calculate_strength(self, post):
+        """
+        Calculates the strength component for the SIT belief update. In this case a combination of
+        the relative number of followers and the belief_similarity between own belief & estimated belief of source.
+        The other person's beliefs are estimated by looking at the stances of their last posts.
+        :param post:        current post by other person (i.e., source)
+        :return:            strength    float
+        """
+        rel_n_followers = self.get_relative_n_followers(post.source)
+        belief_similarity = self.estimate_belief_similarity(post)
+        strength = (rel_n_followers + belief_similarity)/2
+
+        return strength
+
+    def calculate_immediacy(self, post):
+        """
+        Calculates immediacy component for the SIT belief update as  tie strength (i.e., edge weight).
+        :return:            immediacy value
+        """
+
+        tie_strength = self.model.G.edges[self.unique_id, post.source.unique_id, 0]['weight']  # Always key=0 because
+        # maximally one connection in this direction possible.
+        immediacy = tie_strength
+
+        return immediacy
+
+    def calculate_n_sources(self):
+        """
+        For the immediacy component of the SIT belief update, calculates the factor n_sources. The more accounts a user
+        is following, the less they will update their beliefs based on each single one of them.
+        :return:    float
+        """
+        n_following = len(self.following)
+        n_sources = (1.0 / n_following) * 100
+
+        return n_sources
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #  Averaging Belief-update  (Toy, for comparison)
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    def update_beliefs_avg(self, post):
+        """
+        Simplest update_beliefs function.
+        New belief is average between own previous belief and the post's stance on the topic.
+        """
+        # Update towards post's stances
+        for topic, value in post.stances.items():
+            prev_belief = self.beliefs[topic]
+            self.beliefs[topic] = (prev_belief + value) / 2
+
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    #   General Helper-Functions
+    # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+    def init_beliefs(self):
+        """
+        Initialize for each topic a random belief.
+        :return:
+        """
+        for topic in Topic:
+            self.beliefs[str(topic)] = self.random.randint(0, 100)  # TODO: Uniform --> Bimodal(20,80)
+
+    def create_post(self, based_on_beliefs=True):
+        """
+        Creates a new post. Either random or based on own stances.
+        :return: Post
+        """
+        # Get post_id & post's stances
+        id = self.model.post_id_counter
+        # Increase post_id_counter
+        self.model.post_id_counter += 1
+
+        if based_on_beliefs:
+            stances = Post.sample_stances(based_on_agent=self)
+        else:
+            stances = Post.sample_stances()
+
+        # Create post
+        post = Post(id, source=self, stances=stances)
+
+        return post
+
+    def sample_seen_posts(self):
+        """
+        Sample which of the received posts are actually seen/consumed by the agent.
+        Result depends on the ranking implementation and whether the ranking intervention is applied.
+        :return: list of seen posts: [Post]
+        """
+        seen_posts = []
+
+        for post in self.received_posts:
+
+            # If ranking intervention, update the post's visibility.
+            if self.model.ranking_intervention:
+                print('DIFFERENT RANKING!')
+                post.visibility *= post.factcheck_result.value
+
+            # "Coin toss"
+            random_nr = random.random()
+            if random_nr < post.visibility:
+                seen_posts.append(post)
+
+        return seen_posts
+
+    def get_relative_n_followers(self, source):
+        """
+        Normalizes n_followers of agent.
+        If 0.0: least n_followers in network.
+        If 100.0: most n_followers in network.
+        :return:    relative_n_followers    float   percentile
+        """
+        n_followers = len(list(self.model.G.successors(source.unique_id)))
+        min_followers, max_followers = self.model.agents_data["n_followers_range"]
+
+        relative_n_followers = (n_followers - min_followers) / (max_followers - min_followers)
+        relative_n_followers = relative_n_followers * 100
+
+        return relative_n_followers
+
+    def estimate_belief_similarity(self, post):
+        """
+        For the immediacy component of the SIT belief update, estimate the belief similarity of self to other agent
+        (only considering topics in this post).
+        # EXTENSION: could also consider all topics mentioned in their last posts
+        :param post:    Post
+        :return:        float, similarity estimate
+        """
+        # Estimate other person's beliefs (on topics in current post)
+        estimated_beliefs = {}
+
+        for topic, value in post.stances.items():
+            # Estimate their belief on 'topic' by looking at their last posts
+            values = []
+            for post in post.source.last_posts:
+                if topic in post.stances:
+                    value = post.stances[topic]
+                    values.append(value)
+            estimated_beliefs[topic] = sum(values) / len(values)
+
+        # Calculate belief similarity (on beliefs in current post)
+        similarities = []
+        for topic, _ in post.stances.items():
+            similarity = 100 - abs(self.beliefs[topic] - estimated_beliefs[topic])
+            similarities.append(similarity)
+        belief_similarity = sum(similarities) / len(similarities)
+
+        return belief_similarity
+
+    @staticmethod
+    def calculate_update_elasticity(prev_belief, belief_domain=(0, 100), std_dev=30.0):
+        """
+        Calculates the update elasticity of an agent given its previous belief.
+        Needed because it takes more until someone updates away from a belief in which they have high confidence
+        (i.e., belief close extremes of the belief_domain). Beliefs don't update from e.g., 99 --> 20 due to one post.
+        Analogously, when someone has low confidence in a belief (i.e., close to middle of belief_domain),
+        it makes sense that they update more per post.
+
+        :param prev_belief:             float, previous belief of an agent  (domain: belief_domain)
+        :param belief_domain:           tuple, (min, max)
+        :param std_dev:                 float or int                        (domain: belief_domain)
+        :return: update_elasticity:     float                               (domain: [0,1])
+        """
+        x = prev_belief
+        min_belief, max_belief = belief_domain
+        mean = float(min_belief + max_belief) / 2
+        y = normal_distribution(x, mean, std_dev)
+
+        # Scale y, such that at middle (e.g., 50), the update elasticity is 1:
+        max_elasticity = normal_distribution(x=mean)
+        update_elasticity = y / max_elasticity
+        return update_elasticity
+
+    def judge_truthfulness(self, post):
+        """
+        Simple version of judging the truthfulness of a post.
+        Agents with high media literacy judge true posts as true, and false posts as false.
+        Agents with low media literacy judge all posts as true.
+        :param post: Post
+        :return: boolean, whether the post is judged as true or false
+        """
+
+        # A post is only judged as NOT truthful if:
+        #       - the post's factcheck_result is false
+        #   AND
+        #       - the agent's media literacy is high
+        judged_truthfulness = True
+        if self.media_literacy.__eq__(MediaLiteracy.HIGH) and post.factcheck_result.__eq__(FactCheckResult.FALSE):
+            judged_truthfulness = False
+
+        return judged_truthfulness
+
+
+# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+#   More independent Helper-Functions
+# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(-100, 100)):
     """

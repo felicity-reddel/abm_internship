@@ -1,11 +1,10 @@
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+from matplotlib import pyplot as plt
 from numpy import interp
-
 from mesa.visualization.modules import ChartModule, NetworkModule
 from mesa.visualization.ModularVisualization import ModularServer
 
-from Model import *
 from Posts import *
 
 

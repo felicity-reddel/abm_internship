@@ -11,7 +11,8 @@ class Post:
         if stances is None:
             self.stances = {}
         else:
-            self.stances = stances  # stances represented in the post. {Topic: int_belief}
+            self.stances = self.sample_stances(based_on_agent=self.source)
+            # stances represented in the post. self.stances is {Topic: int_belief}
         self.visibility = self.estimate_visibility()
         self.factcheck_result = FactCheckResult.get_random()  # currently: TRUE or FALSE
 
@@ -20,7 +21,7 @@ class Post:
         """
         Generates and returns dict of stances for one post (i.e., topic & value):  {Topic.TOPIC1: int}
 
-        :param based_on_agent:      the agent for whom the post is generated
+        :param based_on_agent:      the agent by whom the post is generated
         :param max_n_topics:        maximal number of topics in one post
         :param based_on_agent:      generate post-stances based on agent's current stances
         :param skew:                skewness of norm-distribution to sample from. if skew=0: normal distribution
