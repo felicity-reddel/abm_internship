@@ -30,7 +30,9 @@ class SelectAgentsBy(Enum):
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=2, media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM)):
+    def __init__(self, n_agents, n_edges=2,
+                 media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
+                 ranking_intervention=False):
         """
         Initializes the MisinfoModel
         :param n_agents: int, how many agents the model should have
@@ -54,6 +56,7 @@ class MisinfoModel(Model):
         self.init_followers_and_following()
 
         self.apply_media_literacy_intervention(media_literacy_intervention)
+        self.ranking_intervention = ranking_intervention
 
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,

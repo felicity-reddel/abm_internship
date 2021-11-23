@@ -51,7 +51,7 @@ class BaseAgent(Agent):
 
             # Share post to followers
             for follower in self.followers:
-                follower.received_posts.append((post, self))  # self = source of post
+                follower.received_posts.append(post)
 
     def update_beliefs_stage(self):
         """
@@ -63,14 +63,14 @@ class BaseAgent(Agent):
             seen_posts = self.sample_seen_posts()
 
             # For each seen post: judge truthfulness, then update beliefs (if post is judged as truthful).
-            for post, source in seen_posts:
+            for post in seen_posts:
                 # For each seen post: judge whether it is truthful.
                 post_judged_as_truthful = self.judge_truthfulness(post)
                 # For each seen post, which is judged as truthful: update beliefs.
                 if post_judged_as_truthful:
 
                     # Update beliefs
-                    self.update_beliefs_simple_sit(post, source)
+                    self.update_beliefs_simple_sit(post)
 
         # empty received_posts again
         self.received_posts = []
@@ -92,18 +92,17 @@ class BaseAgent(Agent):
                 prev_belief = self.beliefs[topic]
                 self.beliefs[topic] = (prev_belief + value) / 2
 
-    def update_beliefs_simple_sit(self, post, source):
+    def update_beliefs_simple_sit(self, post):
         """
         Updates the beliefs of the agent based on a post.
         (The post which is passed is assumed to be seen by the agent.
         It is also assumed that the agent actually updates beliefs based on the post. I.e., in the current
         implementation, it is assumed that the agent judged the post to be truthful.)
         :param post:    Post, a seen post
-        :param source:  (Base)Agent, the source of the post
         """
 
         # Calculate how the agent will update its beliefs
-        updates = self.calculate_belief_update(post, source)
+        updates = self.calculate_belief_update(post)
 
         # Update own beliefs  (after each seen post)
         for topic, update in updates.items():
@@ -116,7 +115,7 @@ class BaseAgent(Agent):
         :return:
         """
         for topic in Topic:
-            self.beliefs[str(topic)] = self.random.randint(0, 100)
+            self.beliefs[str(topic)] = self.random.randint(0, 100)  # TODO: Uniform --> Bimodal(20,80)
 
     def create_post(self, based_on_beliefs=True):
         """
@@ -134,7 +133,7 @@ class BaseAgent(Agent):
             stances = Post.sample_stances()
 
         # Create post
-        post = Post(id, stances)
+        post = Post(id, source=self, stances=stances)
 
         return post
 
@@ -259,41 +258,38 @@ class BaseAgent(Agent):
 
         return relative_n_followers
 
-    def calculate_strength(self, post, source):
+    def calculate_strength(self, post):
         """
         Calculates the strength component for the SIT belief update. In this case a combination of
         the relative number of followers and the belief_similarity between own belief & estimated belief of source.
         The other person's beliefs are estimated by looking at the stances of their last posts.
         :param post:        current post by other person (i.e., source)
-        :param source:      other person (i.e., source)
         :return:            strength    float
         """
-        rel_n_followers = self.get_relative_n_followers(source)
-        belief_similarity = self.estimate_belief_similarity(post, source)
+        rel_n_followers = self.get_relative_n_followers(post.source)
+        belief_similarity = self.estimate_belief_similarity(post)
         strength = (rel_n_followers + belief_similarity)/2
 
         return strength
 
-    def calculate_immediacy(self, source):
+    def calculate_immediacy(self, post):
         """
         Calculates immediacy component for the SIT belief update as  tie strength (i.e., edge weight).
-        :param source:      other person (i.e., source)
         :return:            immediacy value
         """
 
-        tie_strength = self.model.G.edges[self.unique_id, source.unique_id, 0]['weight']  # Always key=0 because
+        tie_strength = self.model.G.edges[self.unique_id, post.source.unique_id, 0]['weight']  # Always key=0 because
         # maximally one connection in this direction possible.
         immediacy = tie_strength
 
         return immediacy
 
-    def estimate_belief_similarity(self, post, source):
+    def estimate_belief_similarity(self, post):
         """
         For the immediacy component of the SIT belief update, estimate the belief similarity of self to other agent
         (only considering topics in this post).
         # EXTENSION: could also consider all topics mentioned in their last posts
         :param post:    Post
-        :param source:  Agent
         :return:        float, similarity estimate
         """
         # Estimate other person's beliefs (on topics in current post)
@@ -302,7 +298,7 @@ class BaseAgent(Agent):
         for topic, value in post.stances.items():
             # Estimate their belief on 'topic' by looking at their last posts
             values = []
-            for post in source.last_posts:
+            for post in post.source.last_posts:
                 if topic in post.stances:
                     value = post.stances[topic]
                     values.append(value)
@@ -375,16 +371,28 @@ class BaseAgent(Agent):
         """
         Sample which of the received posts are actually seen/consumed by the agent.
         Result depends on the ranking implementation and whether the ranking intervention is applied.
-        :return: list of seen tuples: [(post, source), (post, source), ...]
+        :return: list of seen posts: [Post]
         """
-        """>>>>>>>> CURRENTLY DUMMY BECAUSE BEFORE RANKING IMPLEMENTATION <<<<<<<<<<"""
-        return self.received_posts
+        seen_posts = []
 
-    def calculate_belief_update(self, post, source) -> dict:
+        for post in self.received_posts:
+
+            # If ranking intervention, update the post's visibility.
+            if self.model.ranking_intervention:
+                print('DIFFERENT RANKING!')
+                post.visibility *= post.factcheck_result.value
+
+            # "Coin toss"
+            random_nr = random.random()
+            if random_nr < post.visibility:
+                seen_posts.append(post)
+
+        return seen_posts
+
+    def calculate_belief_update(self, post) -> dict:
         """
         Calculates the agent's updates on the past.
         :param post:    Post
-        :param source:  (Base)Agent, the source of the post
         :return:        dict, {topic: update}
         """
 
@@ -399,9 +407,9 @@ class BaseAgent(Agent):
             prev_belief = self.beliefs[topic]
 
             # Calculate SIT components
-            strength = self.calculate_strength(post, source)  # avg(relative n_followers, belief_similarity)
+            strength = self.calculate_strength(post)  # avg(relative n_followers, belief_similarity)
             # belief_similarity: between own_beliefs and source's_beliefs
-            immediacy = self.calculate_immediacy(source)  # tie_strength
+            immediacy = self.calculate_immediacy(post)  # tie_strength
             n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
 
             # Combine components

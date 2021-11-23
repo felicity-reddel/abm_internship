@@ -5,10 +5,15 @@ from scipy.stats import skewnorm
 
 class Post:
 
-    def __init__(self, unique_id, stances={}):
+    def __init__(self, unique_id, source, stances=None):
         self.unique_id = unique_id
-        self.stances = stances  # stances represented in the post. {Topic: int_belief}
-        self.factcheck_result = random.choice([result for result in FactCheckResult])
+        self.source = source
+        if stances is None:
+            self.stances = {}
+        else:
+            self.stances = stances  # stances represented in the post. {Topic: int_belief}
+        self.visibility = self.estimate_engagement()
+        self.factcheck_result = FactCheckResult.get_random()  # currently: TRUE or FALSE
 
     @staticmethod
     def sample_stances(max_n_topics=1, based_on_agent=None, skew=4) -> dict:
@@ -45,6 +50,37 @@ class Post:
 
         return stances
 
+    def estimate_engagement(self):
+        """
+        Estimates the visibility of the post.
+        Here: just the extremeness of its stances
+        :return:    float
+        """
+
+        extremeness = self.calculate_extremeness()
+        engagement = extremeness
+
+        return engagement
+
+    def calculate_extremeness(self):
+        """
+        Calculates how extreme the post is.
+        Here: the posts extremeness = the average extremeness of all its stances.
+        :return: float
+        """
+        stances = self.stances.values()
+        extremeness_values = []
+        for stance in stances:
+            extremeness = abs(100-stance)
+            extremeness_values.append(extremeness)
+
+        avg_extremeness = sum(stances) / len(stances)
+
+        # Scale to domain [0,1)
+        avg_extremeness /= 100
+
+        return avg_extremeness
+
 
 class Topic(Enum):
     """
@@ -62,7 +98,7 @@ class Topic(Enum):
 
 class FactCheckResult(Enum):
     """
-    Enumeration representing the a factcheck would have.
+    Enumeration representing the a factcheck would have (ground truth).
     """
     """
     Implemented factcheck results. 
@@ -74,8 +110,14 @@ class FactCheckResult(Enum):
         else:
             return False
 
+    FALSE = 0.5  # TODO: EXPLAIN
     TRUE = 1
-    FALSE = 2
+    # MISLEADING = 2
+
+    @staticmethod
+    def get_random():
+        result = random.choice(list(FactCheckResult))
+        return result
 
 
 def adjust_skew(current_belief, skew):
