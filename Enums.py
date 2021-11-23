@@ -20,6 +20,7 @@ class Topic(Enum):
     @staticmethod
     def get_random():
         result = random.choice(list(Topic))
+
         return result
 
 
