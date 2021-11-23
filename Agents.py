@@ -1,20 +1,7 @@
 import math
 from mesa import Agent
 from Posts import *
-
-
-class MediaLiteracy(Enum):
-    """
-    Media Literacy Levels
-    """
-    def __eq__(self, o: object) -> bool:
-        if self.value is o.value:
-            return True
-        else:
-            return False
-
-    LOW = 0
-    HIGH = 1
+from Enums import *
 
 
 class BaseAgent(Agent):
@@ -25,7 +12,7 @@ class BaseAgent(Agent):
 
         self.beliefs = {}
         self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
-        self.media_literacy = random.choice([level for level in MediaLiteracy])
+        self.media_literacy = MediaLiteracy.get_random()
         self.init_beliefs()
         self.followers = []
         self.following = []

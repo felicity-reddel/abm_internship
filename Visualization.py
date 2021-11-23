@@ -93,7 +93,7 @@ def show_visualization(model):
     server = ModularServer(model,  # class name
                            [network, chart_avg_belief, chart_indiv_belief],
                            'Misinfo Model',  # title
-                           {'n_agents': 1000,
+                           {'n_agents': 100,
                             'n_edges': 2,
                             'media_literacy_intervention': (0.0, SelectAgentsBy.RANDOM),
                             'ranking_intervention': False})  # model parameters

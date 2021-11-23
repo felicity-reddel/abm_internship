@@ -1,30 +1,13 @@
-from typing import Dict, Any
-
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import StagedActivation
 from mesa.space import NetworkGrid
-from Agents import *
-from Posts import *
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
-class SelectAgentsBy(Enum):
-    """
-    Possibilities to select agents. E.g., for who will by empowered by the Media Literacy Intervention.
-    Easily extendable to e.g., pick agents based on an agent-characteristic (e.g., age, if age is an agent attribute).
-    """
-
-    def __eq__(self, o: object) -> bool:
-        if self.value is o.value:
-            return True
-        else:
-            return False
-
-    RANDOM = 0
-    # HIGH_AGE = 1
-    # LOW_AGE = 2
+from Agents import *
+from Posts import *
+from Enums import *
 
 
 class MisinfoModel(Model):

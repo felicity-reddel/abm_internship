@@ -1,6 +1,6 @@
-from enum import Enum
 import random
 from scipy.stats import skewnorm
+from Enums import *
 
 
 class Post:
@@ -71,7 +71,7 @@ class Post:
         stances = self.stances.values()
         extremeness_values = []
         for stance in stances:
-            extremeness = abs(100-stance)
+            extremeness = abs(100 - stance)
             extremeness_values.append(extremeness)
 
         avg_extremeness = sum(stances) / len(stances)
@@ -80,44 +80,6 @@ class Post:
         avg_extremeness /= 100
 
         return avg_extremeness
-
-
-class Topic(Enum):
-    """
-    Implemented Topics (for stances of posts & beliefs of agents).
-    Easily extendable to include more topics (e.g., MASKS, EVOLUTION, etc.)
-    """
-    def __eq__(self, o: object) -> bool:
-        if self.value is o.value:
-            return True
-        else:
-            return False
-
-    VAX = 1
-
-
-class FactCheckResult(Enum):
-    """
-    Enumeration representing the a factcheck would have (ground truth).
-    """
-    """
-    Implemented factcheck results. 
-    Easily extendable to include more options (e.g., MISLEADING)
-    """
-    def __eq__(self, o: object) -> bool:
-        if self.value is o.value:
-            return True
-        else:
-            return False
-
-    FALSE = 0.5  # TODO: EXPLAIN
-    TRUE = 1
-    # MISLEADING = 2
-
-    @staticmethod
-    def get_random():
-        result = random.choice(list(FactCheckResult))
-        return result
 
 
 def adjust_skew(current_belief, skew):
