@@ -7,6 +7,10 @@ import networkx as nx
 from Agents import *
 from Enums import *
 
+import numpy as np
+import math
+from matplotlib import pyplot as plt
+
 
 class MisinfoModel(Model):
     """Simple model with n agents."""
@@ -57,6 +61,22 @@ class MisinfoModel(Model):
             f"Agent 99": self.get_vax_belief_99,
         })
 
+        # Overview of how many agents have how many connections
+        data = [len(agent.followers) for agent in self.schedule.agents]
+
+        bins = np.linspace(math.ceil(min(data)),
+                           math.floor(max(data)),
+                           40)  # fixed number of bins
+
+        plt.xlim([min(data) - 5, max(data) + 5])
+
+        plt.hist(data, bins=bins, alpha=0.5)
+        plt.title(f'max followers: {max(data)}')
+        plt.xlabel('Number of followers')
+        plt.ylabel('count')
+
+        plt.show()
+
     def step(self):
         """Advance the model by one step."""
         self.schedule.step()
@@ -70,7 +90,7 @@ class MisinfoModel(Model):
     def init_agents(self):
         """Initializes the agents."""
         for i in range(self.n_agents):
-            a = BaseAgent(i, self)
+            a = Disinformer(i, self)
             self.schedule.add(a)
 
         # Place each agent in its node. (& save node_position into agent)
@@ -302,7 +322,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 25][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 1][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -314,7 +334,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 50][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 2][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -326,7 +346,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 75][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 3][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -338,7 +358,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 99][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == 4][0]
         belief = agent_i.beliefs[topic]
         return belief
 

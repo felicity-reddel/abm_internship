@@ -2,17 +2,21 @@ from Model import MisinfoModel  # , draw_graph
 from Visualization import *
 import time
 
-visualize = True
+# Parameters
+visualize = False
+n_agents = 1000
+n_edges = 10
+media_literacy_intervention = (0.0, SelectAgentsBy.RANDOM)
+ranking_intervention = False
 
 if visualize:
-    show_visualization(MisinfoModel)  # only needs this line. run model in browser. above model not used. Separate.
+
+    # only needs this line. run model in browser. above model not used. Separate.
+    show_visualization(MisinfoModel, n_agents, n_edges, media_literacy_intervention, ranking_intervention)
 
 else:
-    max_run_length = 100
-    n_agents = 1000
-    n_edges = 10
-    media_literacy_intervention = (0.0, SelectAgentsBy.RANDOM)
-    ranking_intervention = True
+
+    max_run_length = 1
 
     model = MisinfoModel(n_agents=n_agents,
                          n_edges=n_edges,

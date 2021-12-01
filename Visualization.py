@@ -44,7 +44,12 @@ def get_edge_width(weight=1, weight_borders=(0, 100)):
     return width
 
 
-def show_visualization(model):
+def show_visualization(model,
+                       n_agents=100,
+                       n_edges=3,
+                       media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
+                       ranking_intervention=False):
+
     def network_portrayal(G):
         # The model ensures there is always 1 agent per node
 
@@ -92,10 +97,10 @@ def show_visualization(model):
     server = ModularServer(model,  # class name
                            [network, chart_avg_belief, chart_indiv_belief],
                            'Misinfo Model',  # title
-                           {'n_agents': 1000,
-                            'n_edges': 3,
-                            'media_literacy_intervention': (0.0, SelectAgentsBy.RANDOM),
-                            'ranking_intervention': False})  # model parameters
+                           {'n_agents': n_agents,
+                            'n_edges': n_edges,
+                            'media_literacy_intervention': media_literacy_intervention,
+                            'ranking_intervention': ranking_intervention})  # model parameters
 
     server.port = 8521  # The default
     server.launch()

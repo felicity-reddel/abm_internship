@@ -21,10 +21,10 @@ class Post:
         """
         Generates and returns dict of stances for one post (i.e., topic & value):  {Topic.TOPIC1: int}
 
-        :param based_on_agent:      the agent by whom the post is generated
-        :param max_n_topics:        maximal number of topics in one post
-        :param based_on_agent:      generate post-stances based on agent's current stances
-        :param skew:                skewness of norm-distribution to sample from. if skew=0: normal distribution
+        :param max_n_topics:    int,    maximal number of topics in one post
+        :param based_on_agent:  Agent,  if None: generate random belief,
+                                        if agent: generate post-stances based that agent's beliefs
+        :param skew:            int?,  skewness of norm-distribution to sample from. if skew=0: normal distribution
 
         :return: dict of stances (i.e., topics with value)
         """
@@ -33,19 +33,24 @@ class Post:
 
         # Sample stances (stance = topic with value)
         stances = {}
-        for m in range(n_topics):
+
+        for _ in range(n_topics):
 
             # Pick topic
             topic = str(Topic.get_random())  # Ext: could adjust weights for diff. topics
 
             # Sample value on topic
-            if based_on_agent:
+            if based_on_agent is None:
+                value = random.randint(0, 100)
+            else:
                 current_belief = based_on_agent.beliefs[topic]
                 adjusted_skew = adjust_skew(current_belief, skew)
                 value = skewnorm.rvs(a=adjusted_skew, loc=current_belief)
+                # print(f'current belief: {current_belief}')
                 value = max(min(value, 100), 0)
-            else:
-                value = random.randint(0, 100)
+                # print(f'value: {value}')
+                # print()
+
             stances[topic] = value
 
         return stances

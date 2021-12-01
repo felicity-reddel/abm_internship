@@ -2,17 +2,18 @@ import math
 from mesa import Agent
 from Posts import *
 from Enums import *
+import numpy as np
 
 
 class BaseAgent(Agent):
     """Most simple agent to start with."""
 
     def __init__(self, unique_id, model):
+
         super().__init__(unique_id, model)
 
         self.beliefs = {}
-        self.tendency_to_share = random.random()  # Ext: adjust for different kind of agents
-        self.media_literacy = MediaLiteracy.get_random()
+
         self.init_beliefs()
         self.followers = []
         self.following = []
@@ -23,26 +24,47 @@ class BaseAgent(Agent):
     #   Step function: in two Stages.
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
+    def sample_number_of_posts(self):
+        """
+        Sample number of posts that an agent should share at one instant. It samples with a normal distribution based
+        on this agent's vocality parameters (mu and sigma).
+        :return:
+            nr_of_posts: int
+        """
+
+        mu = self.vocality['mu']
+        sigma = self.vocality['sigma']
+
+        nr_of_posts = max(0, np.random.normal(mu, sigma, 1)[0])
+
+        # rounding and converting to int
+        nr_of_posts = round(nr_of_posts)
+
+        return nr_of_posts
+
     def share_post_stage(self):
         """
         First part of the agent's step function. The first stage what all agents do in a time tick.
         """
 
-        # Decide whether to post
-        will_post = True if random.random() < self.tendency_to_share else False
+        nr_of_posts = self.sample_number_of_posts()
+        posts = []
 
-        # Create post & share
-        if will_post:
+        # Create posts
+        for i in range(nr_of_posts):
             post = self.create_post()
-            self.last_posts.append(post)
+            posts.append(post)
 
-            # Share post to followers
-            for follower in self.followers:
-                follower.received_posts.append(post)
+        # Share post to followers
+        for follower in self.followers:
+            follower.received_posts += posts
+
+        # Save own posts
+        self.last_posts += posts
 
     def update_beliefs_stage(self):
         """
-        Second part of the agent's step function. The second stage what all agents do in a time tick.
+        Second part of the agent's step function. The second stage what all agents do in an instant.
         """
         # Agent can only update beliefs if it received posts in the first stage of the time tick
         if len(self.received_posts) > 0:
@@ -51,8 +73,10 @@ class BaseAgent(Agent):
 
             # For each seen post: judge truthfulness, then update beliefs (if post is judged as truthful).
             for post in seen_posts:
+
                 # For each seen post: judge whether it is truthful.
                 post_judged_as_truthful = self.judge_truthfulness(post)
+
                 # For each seen post, which is judged as truthful: update beliefs.
                 if post_judged_as_truthful:
 
@@ -80,12 +104,11 @@ class BaseAgent(Agent):
 
         # Update own beliefs  (after each seen post)
         for topic, update in updates.items():
-            prev_belief = self.beliefs[topic]
-            self.beliefs[topic] = prev_belief + update
+            self.beliefs[topic] += update
 
     def calculate_belief_update(self, post) -> dict:
         """
-        Calculates the agent's updates on the past.
+        Calculates the agent's updates on the post.
         :param post:    Post
         :return:        dict, {topic: update}
         """
@@ -105,6 +128,10 @@ class BaseAgent(Agent):
             # belief_similarity: between own_beliefs and source's_beliefs
             immediacy = self.calculate_immediacy(post)  # tie_strength
             n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
+
+            # print(f'strength: {strength}')
+            # print(f'immedicacy: {immediacy}')
+            # print(f'n_sources: {n_sources}')
 
             # Combine components
             social_impact = strength * immediacy * n_sources
@@ -188,11 +215,9 @@ class BaseAgent(Agent):
 
     def init_beliefs(self):
         """
-        Initialize for each topic a random belief.
-        :return:
+        Initialize for each topic a belief.
         """
-        for topic in Topic:
-            self.beliefs[str(topic)] = self.random.randint(0, 100)  # TODO: Uniform --> Bimodal(20,80)
+        pass
 
     def create_post(self, based_on_beliefs=True):
         """
@@ -281,7 +306,7 @@ class BaseAgent(Agent):
         return belief_similarity
 
     @staticmethod
-    def calculate_update_elasticity(prev_belief, belief_domain=(0, 100), std_dev=30.0):
+    def calculate_update_elasticity(prev_belief, std_dev=20.0):
         """
         Calculates the update elasticity of an agent given its previous belief.
         Needed because it takes more until someone updates away from a belief in which they have high confidence
@@ -290,18 +315,17 @@ class BaseAgent(Agent):
         it makes sense that they update more per post.
 
         :param prev_belief:             float, previous belief of an agent  (domain: belief_domain)
-        :param belief_domain:           tuple, (min, max)
         :param std_dev:                 float or int                        (domain: belief_domain)
         :return: update_elasticity:     float                               (domain: [0,1])
         """
-        x = prev_belief
-        min_belief, max_belief = belief_domain
-        mean = float(min_belief + max_belief) / 2
-        y = normal_distribution(x, mean, std_dev)
+        mean = 50
+
+        y = normal_distribution(x=prev_belief, mean=mean, std_dev=std_dev)
 
         # Scale y, such that at middle (e.g., 50), the update elasticity is 1:
-        max_elasticity = normal_distribution(x=mean)
+        max_elasticity = normal_distribution(x=mean, mean=mean, std_dev=std_dev)
         update_elasticity = y / max_elasticity
+
         return update_elasticity
 
     def judge_truthfulness(self, post):
@@ -324,11 +348,44 @@ class BaseAgent(Agent):
         return judged_truthfulness
 
 
+class NormalUser(BaseAgent):
+
+    def __init__(self, unique_id, model):
+
+        super().__init__(unique_id, model)
+
+        self.vocality = {'mu': 2, 'sigma': 0.7}  # This is used to sample nr of posts
+        self.media_literacy = MediaLiteracy.get_random()  # {LOW, HIGH}
+
+    def init_beliefs(self):
+        """
+        Initialize for each topic a random belief.
+        """
+        for topic in Topic:
+            self.beliefs[str(topic)] = self.random.randint(0, 100)
+
+
+class Disinformer(BaseAgent):
+
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+
+        self.vocality = {'mu': 10, 'sigma': 0.7}  # This is used to sample nr of posts
+        self.media_literacy = MediaLiteracy.LOW
+
+    def init_beliefs(self):
+        """
+        Initialize for each topic a random extreme belief.
+        """
+        for topic in Topic:
+            self.beliefs[str(topic)] = self.random.randint(0, 10)
+
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 #   More independent Helper-Functions
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(-100, 100)):
+
+def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(0, 100)):
     """
     Rescales a value from one range to another.
     By default from range [-100ˆ3,100ˆ3] to [-100,100].
@@ -338,12 +395,27 @@ def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(-100, 100)):
     :param new_domain:   tuple, (min_new_range, max_new_range)
     :return: new_value: float
     """
-    old_min, old_max = old_domain
-    new_min, new_max = new_domain
-    old_range = old_max - old_min
-    new_range = new_max - new_min
 
-    new_value = (old_value - old_min) * new_range / old_range + new_min
+    if old_value < 0:
+
+        old_min, old_max = old_domain
+        new_min, _ = new_domain
+        new_max = 0
+        old_range = old_max - old_min
+        new_range = new_max - new_min
+
+        new_value = (((old_value - old_min) * new_range) / old_range) + new_min
+
+    elif old_value > 0:
+        old_min, old_max = old_domain
+        _, new_max = new_domain
+        new_min = 0
+        old_range = old_max - old_min
+        new_range = new_max - new_min
+
+        new_value = (((old_value - old_min) * new_range) / old_range) + new_min
+    else:
+        new_value = 0
 
     return new_value
 
