@@ -327,11 +327,11 @@ class BaseAgent(Agent):
         """
         mean = 50
 
-        y = normal_distribution(x=prev_belief, mean=mean, std_dev=std_dev)
+        update_strength = get_update_strength(belief_strength=prev_belief, mean=mean, std_dev=std_dev)
 
-        # Scale y, such that at middle (e.g., 50), the update elasticity is 1:
-        max_elasticity = normal_distribution(x=mean, mean=mean, std_dev=std_dev)
-        update_elasticity = y / max_elasticity
+        # Rescale update_strength, such that at middle (e.g., 50), the update elasticity is 1:
+        max_elasticity = get_update_strength(belief_strength=mean, mean=mean, std_dev=std_dev)
+        update_elasticity = update_strength / max_elasticity
 
         return update_elasticity
 
@@ -356,6 +356,7 @@ class BaseAgent(Agent):
 
 
 class NormalUser(BaseAgent):
+    """ NormalUser Agent """
 
     def __init__(self, unique_id, model):
 
@@ -373,6 +374,7 @@ class NormalUser(BaseAgent):
 
 
 class Disinformer(BaseAgent):
+    """ Disinformer Agent"""
 
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -382,7 +384,7 @@ class Disinformer(BaseAgent):
 
     def init_beliefs(self):
         """
-        Initialize for each topic a random extreme belief.
+        Initialize for each topic a random extreme belief. Currently always at the lower end of [0,100].
         """
         for topic in Topic:
             self.beliefs[str(topic)] = self.random.randint(0, 10)
@@ -427,18 +429,19 @@ def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(0, 100)):
     return new_value
 
 
-def normal_distribution(x, mean=50.0, std_dev=30.0):
+def get_update_strength(belief_strength, mean=50.0, std_dev=30.0):
     """
-    Returns which y corresponds to the provided x value and parameter of the normal distribution.
-    :param x:       float
-    :param mean:    float
-    :param std_dev: float
-    :return: y      float
+    Uses a normal distribution (with the provided parameters)
+    to return the update_strength that corresponds to the provided belief_strength.
+    :param belief_strength:     float
+    :param mean:                float
+    :param std_dev:             float
+    :return: update_strength    float
     """
 
-    dividend = math.exp((-(x - mean) ** 2 / (2 * std_dev ** 2)))
+    dividend = math.exp((-(belief_strength - mean) ** 2 / (2 * std_dev ** 2)))
     divisor = math.sqrt(2 * math.pi) * std_dev
 
-    y = dividend / divisor
+    update_strength = dividend / divisor
 
-    return y
+    return update_strength

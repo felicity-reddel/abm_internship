@@ -94,7 +94,6 @@ class MisinfoModel(Model):
         types = []
         percentages = []
         for type, percentage in agent_ratio.items():
-            print(f'type: {type}')
             types.append(type)
             percentages.append(percentage)
 

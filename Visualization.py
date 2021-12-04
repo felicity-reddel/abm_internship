@@ -9,6 +9,11 @@ from Posts import *
 
 
 def get_node_color(agent):
+    """
+    Returns the color value of an agent. This varies based on the agent's belief on Topic.VAX.
+    :param agent:   Agent
+    :return: c_val, tuple: (r,g,b)  all three are floats
+    """
     belief = agent.beliefs[str(Topic.VAX)]
     # Map belief value to color value
     # with PiYG, a diverging colormap:
@@ -44,17 +49,26 @@ def get_edge_width(weight=1, weight_borders=(0, 100)):
     return width
 
 
-def show_visualization(model,
-                       n_agents=100,
-                       n_edges=3,
+def show_visualization(model, n_agents=100, n_edges=3,
                        media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
                        ranking_intervention=False):
+    """
+    Internal function to show the visualization.
+    :param model:       MisinfoModel
+    :param n_agents:    int
+    :param n_edges:     int
+    :param media_literacy_intervention:  tuple: (percentage_reached, how_to_select_agents)  (float, Enum)
+    :param ranking_intervention:         boolean
+    """
 
     def network_portrayal(G):
+        """
+        Internal function to portray a network.
+        :param G:   Graph, MultiDiGraph
+        :return:    dict,   {'nodes': [portrayal_details],
+                             'edges': [portrayal_details]}
+        """
         # The model ensures there is always 1 agent per node
-
-        # def get_agents(source, target):
-        #     return grid.nodes[source]['agent'][0], grid.nodes[target]['agent'][0]
 
         portrayal = dict()
         portrayal['nodes'] = [{"shape": "circle",
