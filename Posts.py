@@ -45,6 +45,7 @@ class Post:
             else:
                 current_belief = based_on_agent.beliefs[topic]
                 adjusted_skew = adjust_skew(current_belief, skew)
+                # adjusted_skew = 0  # --> normal distribution, no skew.
                 value = skewnorm.rvs(a=adjusted_skew, loc=current_belief)
                 # print(f'current belief: {current_belief}')
                 value = max(min(value, 100), 0)

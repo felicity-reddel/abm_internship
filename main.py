@@ -3,9 +3,9 @@ from Visualization import *
 import time
 
 # Parameters
-visualize = False
-n_agents = 1000
-n_edges = 10
+visualize = True
+n_agents = 100
+n_edges = 3
 media_literacy_intervention = (0.0, SelectAgentsBy.RANDOM)
 ranking_intervention = False
 

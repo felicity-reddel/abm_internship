@@ -129,18 +129,23 @@ class BaseAgent(Agent):
             immediacy = self.calculate_immediacy(post)  # tie_strength
             n_sources = self.calculate_n_sources()  # (1 / n_following) * 100, [0,100]
 
-            # print(f'strength: {strength}')
-            # print(f'immedicacy: {immediacy}')
-            # print(f'n_sources: {n_sources}')
-
             # Combine components
-            social_impact = strength * immediacy * n_sources
+            social_impact = strength * immediacy * n_sources  # [0,100] * [0,100] * [0,100] --> [0,100^3]
 
-            # Rescale such that:
-            # the maximal decrease results in a belief of 0, and
-            # the maximal increase results in a belief of 100.
-            max_decrease = -1 * prev_belief
-            max_increase = 100 - prev_belief
+            # Rescale
+            max_increase = 0
+            max_decrease = 0
+            # downwards belief update
+            if post_value < prev_belief:
+                max_decrease = post_value - prev_belief
+                social_impact *= -1  # to actually decrease belief
+            # upwards belief update
+            elif post_value > prev_belief:
+                max_increase = post_value - prev_belief
+            # no belief update
+            else:  # post_value == prev_belief (--> max_increase & max_decrease stay 0)
+                pass
+
             rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
 
             # Calculate update elasticity
@@ -153,8 +158,10 @@ class BaseAgent(Agent):
             # # Validation
             # if self.unique_id == 0:
             #     print(f'prev_belief: {prev_belief} \n'
+            #           f'post value: {post_value} \n'
+            #           f'max decrease: {max_decrease} \n'
             #           f'update_elasticity: {update_elasticity} \n'
-            #           f'social impact: {rescaled_social_impact} \n'
+            #           f'rescaled social impact: {rescaled_social_impact} \n'
             #           f'update: {update} \n')
 
         return updates
@@ -306,7 +313,7 @@ class BaseAgent(Agent):
         return belief_similarity
 
     @staticmethod
-    def calculate_update_elasticity(prev_belief, std_dev=20.0):
+    def calculate_update_elasticity(prev_belief, std_dev=15.0):
         """
         Calculates the update elasticity of an agent given its previous belief.
         Needed because it takes more until someone updates away from a belief in which they have high confidence
@@ -395,21 +402,21 @@ def rescale(old_value, old_domain=(-1000000, 1000000), new_domain=(0, 100)):
     :param new_domain:   tuple, (min_new_range, max_new_range)
     :return: new_value: float
     """
+    old_min, old_max = old_domain
 
     if old_value < 0:
-
-        old_min, old_max = old_domain
-        new_min, _ = new_domain
+        old_max = 0  # we already know that it should decrease, thus old_max = 0  and  new_max = 0
         new_max = 0
+        new_min, _ = new_domain
         old_range = old_max - old_min
         new_range = new_max - new_min
 
         new_value = (((old_value - old_min) * new_range) / old_range) + new_min
 
     elif old_value > 0:
-        old_min, old_max = old_domain
-        _, new_max = new_domain
+        old_min = 0  # we already know that it should increase, thus old_min = 0   and  new_min = 0
         new_min = 0
+        _, new_max = new_domain
         old_range = old_max - old_min
         new_range = new_max - new_min
 

@@ -90,7 +90,8 @@ class MisinfoModel(Model):
     def init_agents(self):
         """Initializes the agents."""
         for i in range(self.n_agents):
-            a = Disinformer(i, self)
+            # a = Disinformer(i, self)
+            a = NormalUser(i, self)
             self.schedule.add(a)
 
         # Place each agent in its node. (& save node_position into agent)
