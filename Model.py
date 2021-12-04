@@ -108,9 +108,13 @@ class MisinfoModel(Model):
                 a = NormalUser(i, self)
                 self.schedule.add(a)
             elif type is Disinformer.__name__:
-                a = NormalUser(i, self)
+                a = Disinformer(i, self)
                 self.schedule.add(a)
 
+        disinformers = [agent for agent in self.schedule.agents if isinstance(agent, Disinformer)]
+        normal_users = [agent for agent in self.schedule.agents if isinstance(agent, NormalUser)]
+        print(f'disinformers: {len(disinformers)} \n'
+              f'normal_users: {len(normal_users)} \n')
         # Place each agent in its node. (& save node_position into agent)
         for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
             agent = self.schedule.agents[node]

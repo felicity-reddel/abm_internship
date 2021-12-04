@@ -6,6 +6,7 @@ from mesa.visualization.modules import ChartModule, NetworkModule
 from mesa.visualization.ModularVisualization import ModularServer
 
 from Posts import *
+from Agents import *
 
 
 def get_node_color(agent):
@@ -49,7 +50,10 @@ def get_edge_width(weight=1, weight_borders=(0, 100)):
     return width
 
 
-def show_visualization(model, n_agents=100, n_edges=3,
+def show_visualization(model,
+                       n_agents=100,
+                       n_edges=3,
+                       agent_ratio={NormalUser.__name__: 0.9, Disinformer.__name__: 0.1},
                        media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
                        ranking_intervention=False):
     """
@@ -57,6 +61,7 @@ def show_visualization(model, n_agents=100, n_edges=3,
     :param model:       MisinfoModel
     :param n_agents:    int
     :param n_edges:     int
+    :param agent_ratio: dict {user_type: percentage},
     :param media_literacy_intervention:  tuple: (percentage_reached, how_to_select_agents)  (float, Enum)
     :param ranking_intervention:         boolean
     """
@@ -113,6 +118,7 @@ def show_visualization(model, n_agents=100, n_edges=3,
                            'Misinfo Model',  # title
                            {'n_agents': n_agents,
                             'n_edges': n_edges,
+                            'agent_ratio': agent_ratio,
                             'media_literacy_intervention': media_literacy_intervention,
                             'ranking_intervention': ranking_intervention})  # model parameters
 

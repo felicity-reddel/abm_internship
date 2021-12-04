@@ -66,25 +66,7 @@ class BaseAgent(Agent):
         """
         Second part of the agent's step function. The second stage what all agents do in an instant.
         """
-        # Agent can only update beliefs if it received posts in the first stage of the time tick
-        if len(self.received_posts) > 0:
-            # Sample which of the received posts are actually seen (depends on ranking).
-            seen_posts = self.sample_seen_posts()
-
-            # For each seen post: judge truthfulness, then update beliefs (if post is judged as truthful).
-            for post in seen_posts:
-
-                # For each seen post: judge whether it is truthful.
-                post_judged_as_truthful = self.judge_truthfulness(post)
-
-                # For each seen post, which is judged as truthful: update beliefs.
-                if post_judged_as_truthful:
-
-                    # Update beliefs
-                    self.update_beliefs_simple_sit(post)
-
-        # empty received_posts again
-        self.received_posts = []
+        pass
 
     # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     #  Simple SIT Belief-update
@@ -372,6 +354,30 @@ class NormalUser(BaseAgent):
         for topic in Topic:
             self.beliefs[str(topic)] = self.random.randint(0, 100)
 
+    def update_beliefs_stage(self):
+        """
+        Second part of the agent's step function. The second stage what all agents do in an instant.
+        """
+        # Agent can only update beliefs if it received posts in the first stage of the time tick
+        if len(self.received_posts) > 0:
+            # Sample which of the received posts are actually seen (depends on ranking).
+            seen_posts = self.sample_seen_posts()
+
+            # For each seen post: judge truthfulness, then update beliefs (if post is judged as truthful).
+            for post in seen_posts:
+
+                # For each seen post: judge whether it is truthful.
+                post_judged_as_truthful = self.judge_truthfulness(post)
+
+                # For each seen post, which is judged as truthful: update beliefs.
+                if post_judged_as_truthful:
+
+                    # Update beliefs
+                    self.update_beliefs_simple_sit(post)
+
+        # empty received_posts again
+        self.received_posts = []
+
 
 class Disinformer(BaseAgent):
     """ Disinformer Agent"""
@@ -388,6 +394,12 @@ class Disinformer(BaseAgent):
         """
         for topic in Topic:
             self.beliefs[str(topic)] = self.random.randint(0, 10)
+
+    def update_beliefs_stage(self):
+        """
+        Second part of the Disinformer agent's step function. Disinformers don't update their beliefs
+        """
+        pass
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 #   More independent Helper-Functions
