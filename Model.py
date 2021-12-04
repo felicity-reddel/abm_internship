@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 class MisinfoModel(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=2,
+    def __init__(self, n_agents, n_edges=2, agent_ratio={NormalUser.__name__: 0.9, Disinformer.__name__: 0.1},
                  media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
                  ranking_intervention=False):
         """
@@ -37,7 +37,7 @@ class MisinfoModel(Model):
         self.post_id_counter = 0
         self.agents_data = {'n_followers_range': (0, 0),
                             'n_following_range': (0, 0)}
-        self.init_agents()
+        self.init_agents(agent_ratio)
         self.init_followers_and_following()
 
         self.apply_media_literacy_intervention(media_literacy_intervention)
@@ -87,12 +87,30 @@ class MisinfoModel(Model):
     # Init functions
     # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-    def init_agents(self):
+    def init_agents(self, agent_ratio):
         """Initializes the agents."""
+
+        # Saving ratio
+        types = []
+        percentages = []
+        for type, percentage in agent_ratio.items():
+            print(f'type: {type}')
+            types.append(type)
+            percentages.append(percentage)
+
+        # Create agents & add them to the scheduler
         for i in range(self.n_agents):
-            # a = Disinformer(i, self)
-            a = NormalUser(i, self)
-            self.schedule.add(a)
+
+            # Pick which type should be added
+            type = random.choices(population=types, weights=percentages, k=1)[0]
+
+            # Add agent of that type
+            if type is NormalUser.__name__:
+                a = NormalUser(i, self)
+                self.schedule.add(a)
+            elif type is Disinformer.__name__:
+                a = NormalUser(i, self)
+                self.schedule.add(a)
 
         # Place each agent in its node. (& save node_position into agent)
         for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)

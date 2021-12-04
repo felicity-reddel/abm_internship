@@ -1,10 +1,12 @@
 from Model import MisinfoModel  # , draw_graph
 from Visualization import *
+from Agents import *
 import time
 
 # Parameters
 visualize = True
 n_agents = 100
+agent_ratio = {NormalUser.__name__: 0.5, Disinformer.__name__: 0.5}
 n_edges = 3
 media_literacy_intervention = (0.0, SelectAgentsBy.RANDOM)
 ranking_intervention = False
