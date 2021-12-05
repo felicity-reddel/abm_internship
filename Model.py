@@ -61,21 +61,21 @@ class MisinfoModel(Model):
             f"Agent 99": self.get_vax_belief_99,
         })
 
-        # Overview of how many agents have how many connections
-        data = [len(agent.followers) for agent in self.schedule.agents]
-
-        bins = np.linspace(math.ceil(min(data)),
-                           math.floor(max(data)),
-                           40)  # fixed number of bins
-
-        plt.xlim([min(data) - 5, max(data) + 5])
-
-        plt.hist(data, bins=bins, alpha=0.5)
-        plt.title(f'max followers: {max(data)}')
-        plt.xlabel('Number of followers')
-        plt.ylabel('count')
-
-        plt.show()
+        # # Overview of how many agents have how many connections
+        # data = [len(agent.followers) for agent in self.schedule.agents]
+        #
+        # bins = np.linspace(math.ceil(min(data)),
+        #                    math.floor(max(data)),
+        #                    40)  # fixed number of bins
+        #
+        # plt.xlim([min(data) - 5, max(data) + 5])
+        #
+        # plt.hist(data, bins=bins, alpha=0.5)
+        # plt.title(f'max followers: {max(data)}')
+        # plt.xlabel('Number of followers')
+        # plt.ylabel('count')
+        #
+        # plt.show()
 
     def step(self):
         """Advance the model by one step."""
@@ -90,7 +90,7 @@ class MisinfoModel(Model):
     def init_agents(self, agent_ratio):
         """Initializes the agents."""
 
-        # Saving ratio
+        # Saving scenario
         types = []
         percentages = []
         for type, percentage in agent_ratio.items():
@@ -113,8 +113,8 @@ class MisinfoModel(Model):
 
         disinformers = [agent for agent in self.schedule.agents if isinstance(agent, Disinformer)]
         normal_users = [agent for agent in self.schedule.agents if isinstance(agent, NormalUser)]
-        print(f'disinformers: {len(disinformers)} \n'
-              f'normal_users: {len(normal_users)} \n')
+        # print(f'disinformers: {len(disinformers)} \n'
+        #       f'normal_users: {len(normal_users)} \n')
         # Place each agent in its node. (& save node_position into agent)
         for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
             agent = self.schedule.agents[node]

@@ -240,7 +240,6 @@ class BaseAgent(Agent):
 
             # If ranking intervention, update the post's visibility.
             if self.model.ranking_intervention:
-                print('DIFFERENT RANKING!')
                 post.visibility *= post.factcheck_result.value
 
             # "Coin toss"
