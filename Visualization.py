@@ -107,10 +107,16 @@ def show_visualization(model,
                                    data_collector_name="data_collector")
 
     chart_indiv_belief = ChartModule([{"Label": "Agent 0", "Color": "yellow"},
-                                      {"Label": "Agent 25", "Color": "orange"},
-                                      {"Label": "Agent 50", "Color": "red"},
-                                      {"Label": "Agent 75", "Color": "purple"},
-                                      {"Label": "Agent 99", "Color": "blue"},],
+                                      {"Label": "Agent 10", "Color": "orange"},
+                                      {"Label": "Agent 20", "Color": "red"},
+                                      {"Label": "Agent 30", "Color": "purple"},
+                                      {"Label": "Agent 40", "Color": "blue"},
+                                      {"Label": "Agent 50", "Color": "green"},
+                                      {"Label": "Agent 60", "Color": "yellowgreen"},
+                                      {"Label": "Agent 70", "Color": "fuchsia"},
+                                      {"Label": "Agent 80", "Color": "cyan"},
+                                      {"Label": "Agent 90", "Color": "lime"},
+                                      {"Label": "Agent 100", "Color": "black"}],
                                      data_collector_name="data_collector2")
 
     server = ModularServer(model,  # class name

@@ -55,10 +55,16 @@ class MisinfoModel(Model):
         # Hard-coded because programmatic attempt didn't work out. (see Trello)
         self.data_collector2 = DataCollector(model_reporters={
             f"Agent 0": self.get_vax_belief_0,
-            f"Agent 25": self.get_vax_belief_25,
+            f"Agent 10": self.get_vax_belief_10,
+            f"Agent 20": self.get_vax_belief_20,
+            f"Agent 30": self.get_vax_belief_30,
+            f"Agent 40": self.get_vax_belief_40,
             f"Agent 50": self.get_vax_belief_50,
-            f"Agent 75": self.get_vax_belief_75,
-            f"Agent 99": self.get_vax_belief_99,
+            f"Agent 60": self.get_vax_belief_60,
+            f"Agent 70": self.get_vax_belief_70,
+            f"Agent 80": self.get_vax_belief_80,
+            f"Agent 90": self.get_vax_belief_90,
+            f"Agent 100": self.get_vax_belief_100,
         })
 
         # # Overview of how many agents have how many connections
@@ -332,58 +338,129 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 0][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0][0]
         belief = agent_i.beliefs[topic]
         return belief
 
-    def get_vax_belief_25(self, dummy) -> float:
+    def get_vax_belief_10(self, dummy) -> float:
         """
-        Returns the belief of agent 25 at current tick.
+        Returns the belief a specific agent at current tick. (The agent at 10% of unique_ids.)
         For data_collector2.
         :param dummy:   to avoid error
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 1][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.1][0]
+        belief = agent_i.beliefs[topic]
+        return belief
+
+    def get_vax_belief_20(self, dummy) -> float:
+        """
+        Returns the belief a specific agent at current tick. (The agent at 20% of unique_ids.)
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
+        topic = str(Topic.VAX)
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.2][0]
+        belief = agent_i.beliefs[topic]
+        return belief
+
+    def get_vax_belief_30(self, dummy) -> float:
+        """
+        Returns the belief a specific agent at current tick. (The agent at 30% of unique_ids.)
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
+        topic = str(Topic.VAX)
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.3][0]
+        belief = agent_i.beliefs[topic]
+        return belief
+
+    def get_vax_belief_40(self, dummy) -> float:
+        """
+        Returns the belief a specific agent at current tick. (The agent at 40% of unique_ids.)
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
+        topic = str(Topic.VAX)
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.4][0]
         belief = agent_i.beliefs[topic]
         return belief
 
     def get_vax_belief_50(self, dummy) -> float:
         """
-        Returns the belief of agent 50 at current tick.
+        Returns the belief a specific agent at current tick. (The agent at 50% of unique_ids.)
         For data_collector2.
         :param dummy:   to avoid error
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 2][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.5][0]
         belief = agent_i.beliefs[topic]
         return belief
 
-    def get_vax_belief_75(self, dummy) -> float:
+    def get_vax_belief_60(self, dummy) -> float:
         """
-        Returns the belief of agent 75 at current tick.
+        Returns the belief a specific agent at current tick. (The agent at 60% of unique_ids.)
         For data_collector2.
         :param dummy:   to avoid error
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 3][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.6][0]
         belief = agent_i.beliefs[topic]
         return belief
 
-    def get_vax_belief_99(self, dummy) -> float:
+    def get_vax_belief_70(self, dummy) -> float:
         """
-        Returns the belief of agent 99 at current tick.
+        Returns the belief a specific agent at current tick. (The agent at 70% of unique_ids.)
         For data_collector2.
         :param dummy:   to avoid error
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == 4][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.7][0]
         belief = agent_i.beliefs[topic]
         return belief
 
+    def get_vax_belief_80(self, dummy) -> float:
+        """
+        Returns the belief a specific agent at current tick. (The agent at 80% of unique_ids.)
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
+        topic = str(Topic.VAX)
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.8][0]
+        belief = agent_i.beliefs[topic]
+        return belief
+
+    def get_vax_belief_90(self, dummy) -> float:
+        """
+        Returns the belief a specific agent at current tick. (The agent at 90% of unique_ids.)
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
+        topic = str(Topic.VAX)
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.9][0]
+        belief = agent_i.beliefs[topic]
+        return belief
+
+    def get_vax_belief_100(self, dummy) -> float:
+        """
+        Returns the belief a specific agent at current tick. (The agent at 100% of unique_ids (i.e., last agent))
+        For data_collector2.
+        :param dummy:   to avoid error
+        :return:        float
+        """
+        topic = str(Topic.VAX)
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents-1][0]
+        belief = agent_i.beliefs[topic]
+        return belief
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 #   Graph Functions
