@@ -29,10 +29,10 @@ def calculate_percentage_agents_above_threshold(model, threshold):
 
 if __name__ == '__main__':
 
-    n_agents = 100
+    n_agents = 1000
     n_edges = 3
     max_run_length = 60
-    n_replications = 3
+    n_replications = 50
 
     # Scenarios = different agent_ratios
     scenarios = [{NormalUser.__name__: 0.98, Disinformer.__name__: 0.02}]  # ,
@@ -43,8 +43,7 @@ if __name__ == '__main__':
     # Policies = combinations of intervention values
     media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM),
                                           (0.1, SelectAgentsBy.RANDOM),
-                                          (0.25, SelectAgentsBy.RANDOM),
-                                          (0.9, SelectAgentsBy.RANDOM)]
+                                          (0.25, SelectAgentsBy.RANDOM)]  # , (0.9, SelectAgentsBy.RANDOM)]
     ranking_intervention_values = [True, False]
 
     policies = list(itertools.product(media_literacy_intervention_values, ranking_intervention_values))
@@ -101,8 +100,8 @@ if __name__ == '__main__':
         directory = os.getcwd()
         path = directory + '/results/'
 
-        file_name = "belief_distributions_before_after.csv"
-        # file_name = "belief_distr_" + str(scenario) + ".csv"
+        # file_name = "belief_distributions_before_after.csv"
+        file_name = "belief_distr_" + str(scenario) + ".csv"
         data.to_csv(path + file_name)
 
         # # Printing
