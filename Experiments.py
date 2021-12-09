@@ -29,11 +29,11 @@ def calculate_percentage_agents_above_threshold(model, threshold):
 
 if __name__ == '__main__':
 
-    n_agents = 1000
+    n_agents = 100
     n_edges = 3
     max_run_length = 60
     n_replications = 50
-    kpi_2_threshold = 75
+    kpi_2_threshold = 50
 
     # Scenarios = different agent_ratios
     scenarios = [{NormalUser.__name__: 1.0, Disinformer.__name__: 0.0},

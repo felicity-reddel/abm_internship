@@ -1,4 +1,6 @@
 import random
+
+import numpy as np
 from scipy.stats import skewnorm
 from Enums import *
 
@@ -14,10 +16,12 @@ class Post:
             self.stances = self.sample_stances(based_on_agent=self.source)
             # stances represented in the post. self.stances is {Topic: int_belief}
         self.visibility = self.estimate_visibility()
-        self.factcheck_result = FactCheckResult.get_random()  # currently: TRUE or FALSE
+        # self.factcheck_result = FactCheckResult.get_random()  # currently: TRUE or FALSE
+        self.factcheck_result = FactCheckResult.sample(stances=self.stances)  # currently: TRUE or FALSE
+        self.visibility_ranking_intervention = self.get_adjusted_visibility()
 
     @staticmethod
-    def sample_stances(max_n_topics=1, based_on_agent=None, skew=4) -> dict:
+    def sample_stances(max_n_topics=1, based_on_agent=None) -> dict:
         """
         Generates and returns dict of stances for one post (i.e., topic & value):  {Topic.TOPIC1: int}
 
@@ -44,9 +48,11 @@ class Post:
                 value = random.randint(0, 100)
             else:
                 current_belief = based_on_agent.beliefs[topic]
-                adjusted_skew = adjust_skew(current_belief, skew)
+                # adjusted_skew = adjust_skew(current_belief, skew)
                 # adjusted_skew = 0  # --> normal distribution, no skew.
-                value = skewnorm.rvs(a=adjusted_skew, loc=current_belief)
+                # value = skewnorm.rvs(a=adjusted_skew, loc=current_belief)
+
+                value = np.random.normal(loc=current_belief, scale=5, size=1)[0]
                 # print(f'current belief: {current_belief}')
                 value = max(min(value, 100), 0)
                 # print(f'value: {value}')
@@ -72,20 +78,35 @@ class Post:
         """
         Calculates how extreme the post is.
         Here: the posts extremeness = the average extremeness of all its stances.
-        :return: float
+        :return: float  [0,1)
         """
         stances = self.stances.values()
         extremeness_values = []
         for stance in stances:
-            extremeness = abs(100 - stance)
+            extremeness = abs(50 - stance)
             extremeness_values.append(extremeness)
 
-        avg_extremeness = sum(stances) / len(stances)
+        avg_extremeness = sum(extremeness_values) / len(extremeness_values)
 
         # Scale to domain [0,1)
-        avg_extremeness /= 100
+        avg_extremeness /= 50
 
         return avg_extremeness
+
+    def get_adjusted_visibility(self):
+        """
+        If the ranking intervention is applied, this method adjusts the visibility of the posts.
+        This adjustment is dependent on the Post's FactCheckResult:
+            if TRUE     -> same visibility
+            if FALSE    -> visibility reduced by 50%
+        :return:  float, [0,1)
+        """
+        adjusted_visibility = self.visibility * self.factcheck_result.value
+
+        # print(f'visibility before ranking: {self.visibility}\n'
+        #       f'factcheck_result: {self.factcheck_result}\n'
+        #       f'adjusted_visibility: {adjusted_visibility}\n')
+        return adjusted_visibility
 
 
 def adjust_skew(current_belief, skew):
@@ -99,7 +120,7 @@ def adjust_skew(current_belief, skew):
     adjusted = skew
 
     # skewed to the left
-    if current_belief - 50 < 0:  # Ext: could parameterize the threshold of 50
+    if current_belief < 50:  # Ext: could parameterize the threshold of 50
         adjusted = -skew
 
     return adjusted

@@ -9,7 +9,7 @@ if __name__ == '__main__':
     # Parameters
     visualize = True
     n_agents = 100
-    agent_ratio = {NormalUser.__name__: 0.9, Disinformer.__name__: 0.1}
+    agent_ratio = {NormalUser.__name__: 1.0, Disinformer.__name__: 0.0}
     n_edges = 3
     media_literacy_intervention = (0.0, SelectAgentsBy.RANDOM)
     ranking_intervention = False
@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     else:
 
-        max_run_length = 1
+        max_run_length = 3
 
         model = MisinfoModel(n_agents=n_agents,
                              n_edges=n_edges,
