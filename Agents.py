@@ -14,7 +14,6 @@ class BaseAgent(Agent):
 
         self.beliefs = {}
         self.init_beliefs()
-        self.differences = []
 
         self.vocality = {}
         self.followers = []
@@ -68,15 +67,6 @@ class BaseAgent(Agent):
             post = self.create_post()
             posts.append(post)
             # print(f'post value: {post.stances[str(Topic.VAX)]}')
-
-        current_belief = self.beliefs[str(Topic.VAX)]
-        self.differences += [current_belief - p.stances[str(Topic.VAX)] for p in posts]
-        # if self.unique_id == 5:
-        #
-        #     if len(differences) != 0:
-        #         print(f'current_belief: {current_belief} \n'
-        #               f'len(last_posts): {len(self.last_posts)}\n'
-        #               f'avg_difference: {sum(differences) / len(differences)}\n')
 
         # Share post to followers
         for follower in self.followers:
