@@ -55,16 +55,16 @@ class MisinfoModel(Model):
         # Hard-coded because programmatic attempt didn't work out. (see Trello)
         self.data_collector2 = DataCollector(model_reporters={
             f"Agent 0": self.get_vax_belief_0,
-            f"Agent 10": self.get_vax_belief_10,
-            f"Agent 20": self.get_vax_belief_20,
-            f"Agent 30": self.get_vax_belief_30,
-            f"Agent 40": self.get_vax_belief_40,
-            f"Agent 50": self.get_vax_belief_50,
-            f"Agent 60": self.get_vax_belief_60,
-            f"Agent 70": self.get_vax_belief_70,
-            f"Agent 80": self.get_vax_belief_80,
-            f"Agent 90": self.get_vax_belief_90,
-            f"Agent 100": self.get_vax_belief_100,
+            f"Agent 1": self.get_vax_belief_10,
+            f"Agent 2": self.get_vax_belief_20,
+            f"Agent 3": self.get_vax_belief_30,
+            f"Agent 4": self.get_vax_belief_40,
+            f"Agent 5": self.get_vax_belief_50,
+            f"Agent 6": self.get_vax_belief_60,
+            f"Agent 7": self.get_vax_belief_70,
+            f"Agent 8": self.get_vax_belief_80,
+            f"Agent 9": self.get_vax_belief_90,
+            f"Agent 10": self.get_vax_belief_100,
         })
 
         # # Overview of how many agents have how many connections

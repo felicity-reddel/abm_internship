@@ -107,16 +107,16 @@ def show_visualization(model,
                                    data_collector_name="data_collector")
 
     chart_indiv_belief = ChartModule([{"Label": "Agent 0", "Color": "#FFCA03"},     # yellow
-                                      {"Label": "Agent 10", "Color": "#FF9300"},    # orange
-                                      {"Label": "Agent 20", "Color": "#F90716"},    # red
-                                      {"Label": "Agent 30", "Color": "#FF00E4"},    # pink
-                                      {"Label": "Agent 40", "Color": "#9C19E0"},    # purple
-                                      {"Label": "Agent 50", "Color": "#3E00FF"},    # blue
-                                      {"Label": "Agent 60", "Color": "#3EDBF0"},    # light blue
-                                      {"Label": "Agent 70", "Color": "#54E346"},    # light green
-                                      {"Label": "Agent 80", "Color": "#27AA80"},    # green
-                                      {"Label": "Agent 90", "Color": "#D06224"},    # brown
-                                      {"Label": "Agent 100", "Color": "#000000"}],  # black
+                                      {"Label": "Agent 1", "Color": "#FF9300"},    # orange
+                                      {"Label": "Agent 2", "Color": "#F90716"},    # red
+                                      {"Label": "Agent 3", "Color": "#FF00E4"},    # pink
+                                      {"Label": "Agent 4", "Color": "#9C19E0"},    # purple
+                                      {"Label": "Agent 5", "Color": "#3E00FF"},    # blue
+                                      {"Label": "Agent 6", "Color": "#3EDBF0"},    # light blue
+                                      {"Label": "Agent 7", "Color": "#54E346"},    # light green
+                                      {"Label": "Agent 8", "Color": "#27AA80"},    # green
+                                      {"Label": "Agent 9", "Color": "#D06224"},    # brown
+                                      {"Label": "Agent 10", "Color": "#000000"}],  # black
                                      data_collector_name="data_collector2")
 
     server = ModularServer(model,  # class name
