@@ -35,7 +35,7 @@ if __name__ == '__main__':
     n_replications = 50
 
     # Scenarios = different agent_ratios
-    scenarios = [{NormalUser.__name__: 0.98, Disinformer.__name__: 0.02}]  # ,
+    scenarios = [{NormalUser.__name__: 0.99, Disinformer.__name__: 0.01}]  # ,
     # {NormalUser.__name__: 0.95, Disinformer.__name__: 0.05},
     # {NormalUser.__name__: 0.8, Disinformer.__name__: 0.2},
     # {NormalUser.__name__: 0.25, Disinformer.__name__: 0.75}]
@@ -52,8 +52,10 @@ if __name__ == '__main__':
         print(f'policy: {str(policy)}')
 
     # Printing
-    print(f"Starting")
-    start_time = time.time()
+    start_time_seconds = time.time()
+    start_time = time.localtime(time.time())
+    human_understandable_time = time.strftime('%Y-%m-%d %H:%M:%S', start_time)
+    print(f"\nStarting at time: {human_understandable_time}")
 
     # Run Experiments
     for i, scenario in enumerate(scenarios):  # Each scenario is 1 ratio of agent types
@@ -108,5 +110,8 @@ if __name__ == '__main__':
         # print(f"scenario {i} done")
 
     # Printing
-    run_time = round(time.time() - start_time, 2)
-    print(f"With {max_run_length} steps, runtime is {run_time}")
+    end_time = time.localtime(time.time())
+    human_understandable_time = time.strftime('%Y-%m-%d %H:%M:%S', end_time)
+    print(f"Ending at time: {human_understandable_time}")
+    run_time = round(time.time() - start_time_seconds, 2)
+    print(f"\nWith {max_run_length} steps, runtime is {run_time} seconds --> roughly {round(run_time/60/60, 2)} hours")
