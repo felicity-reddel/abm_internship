@@ -7,16 +7,16 @@ import time
 if __name__ == '__main__':
 
     # Parameters
-    visualize = True
-    n_agents = 100
-    agent_ratio = {NormalUser.__name__: 1.0, Disinformer.__name__: 0.0}
+    visualize = False
+    n_agents = 1000
+    agent_ratio = {NormalUser.__name__: 0.99, Disinformer.__name__: 0.01}
     n_edges = 3
     media_literacy_intervention = (0.0, SelectAgentsBy.RANDOM)
     ranking_intervention = False
 
     if visualize:
 
-        # only needs this line. run model in browser. above model not used. Separate.
+        # Only needs the line below. Runs model in the browser.
         show_visualization(MisinfoModel,
                            n_agents,
                            n_edges,

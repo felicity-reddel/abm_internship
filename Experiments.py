@@ -29,10 +29,10 @@ def calculate_percentage_agents_above_threshold(model, threshold):
 
 if __name__ == '__main__':
 
-    n_agents = 1000
+    n_agents = 5000
     n_edges = 3
     max_run_length = 60
-    n_replications = 50
+    n_replications = 12
 
     # Scenarios = different agent_ratios
     scenarios = [{NormalUser.__name__: 0.99, Disinformer.__name__: 0.01}]  # ,
@@ -41,10 +41,14 @@ if __name__ == '__main__':
     # {NormalUser.__name__: 0.25, Disinformer.__name__: 0.75}]
 
     # Policies = combinations of intervention values
-    media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM),
-                                          (0.1, SelectAgentsBy.RANDOM),
-                                          (0.25, SelectAgentsBy.RANDOM)]  # , (0.9, SelectAgentsBy.RANDOM)]
-    ranking_intervention_values = [True, False]
+    # media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM),
+                                          # (0.1, SelectAgentsBy.RANDOM),
+                                          # (0.25, SelectAgentsBy.RANDOM)]  # , (0.9, SelectAgentsBy.RANDOM)]
+    # ranking_intervention_values = [True, False]
+
+    # Validation
+    media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM)]  # Validation
+    ranking_intervention_values = [False]  # Validation
 
     policies = list(itertools.product(media_literacy_intervention_values, ranking_intervention_values))
 
@@ -90,6 +94,9 @@ if __name__ == '__main__':
                 replication_data = (agents_belief_before, agents_belief_after)
                 df_column.append(replication_data)
 
+                # Printing
+                print(f"replication {replication} done")
+
             # Create policy columns
             policy_column = pd.Series(df_column, name=str(policy))
             # Save policy column into the dataframe
@@ -103,7 +110,9 @@ if __name__ == '__main__':
         path = directory + '/results/'
 
         # file_name = "belief_distributions_before_after.csv"
-        file_name = "belief_distr_" + str(scenario) + ".csv"
+        # file_name = "belief_distr_" + str(scenario) + ".csv"
+        # file_name = "validation_media_literacy_intervention.csv"
+        file_name = "validation_n_agents.csv"
         data.to_csv(path + file_name)
 
         # # Printing

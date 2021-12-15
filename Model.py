@@ -67,21 +67,21 @@ class MisinfoModel(Model):
             f"Agent 10": self.get_vax_belief_100,
         })
 
-        # # Overview of how many agents have how many connections
-        # data = [len(agent.followers) for agent in self.schedule.agents]
-        #
-        # bins = np.linspace(math.ceil(min(data)),
-        #                    math.floor(max(data)),
-        #                    40)  # fixed number of bins
-        #
-        # plt.xlim([min(data) - 5, max(data) + 5])
-        #
-        # plt.hist(data, bins=bins, alpha=0.5)
+        # Overview of how many agents have how many connections
+        data = [len(agent.followers) for agent in self.schedule.agents]
+
+        bins = np.linspace(math.ceil(min(data)),
+                           math.floor(max(data)),
+                           40)  # fixed number of bins
+
+        plt.xlim([min(data) - 5, max(data) + 5])
+
+        plt.hist(data, bins=bins, alpha=0.5)
         # plt.title(f'max followers: {max(data)}')
-        # plt.xlabel('Number of followers')
-        # plt.ylabel('count')
-        #
-        # plt.show()
+        plt.xlabel(f'Number of followers (highest: {max(data)})')
+        plt.ylabel('Agent count')
+
+        plt.show()
 
     def step(self):
         """Advance the model by one step."""
@@ -338,7 +338,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -350,7 +350,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.1][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.1][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -362,7 +362,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.2][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.2][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -374,7 +374,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.3][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.3][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -386,7 +386,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.4][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.4][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -398,7 +398,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.5][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.5][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -410,7 +410,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.6][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.6][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -422,7 +422,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.7][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.7][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -434,7 +434,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.8][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.8][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -446,7 +446,7 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents*0.9][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents * 0.9][0]
         belief = agent_i.beliefs[topic]
         return belief
 
@@ -458,9 +458,10 @@ class MisinfoModel(Model):
         :return:        float
         """
         topic = str(Topic.VAX)
-        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents-1][0]
+        agent_i = [a for a in self.schedule.agents if a.unique_id == self.n_agents - 1][0]
         belief = agent_i.beliefs[topic]
         return belief
+
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 #   Graph Functions
