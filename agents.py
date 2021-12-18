@@ -1,7 +1,7 @@
 import math
 from mesa import Agent
-from Posts import *
-from Enums import *
+from posts import *
+from enums import *
 import numpy as np
 
 
@@ -9,11 +9,15 @@ class BaseAgent(Agent):
     """Most simple agent to start with."""
 
     def __init__(self, unique_id, model):
-
+        """
+        :param unique_id: int
+        :param model: MisinfoPy
+        """
         super().__init__(unique_id, model)
 
         self.beliefs = {}
         self.init_beliefs()
+        self.media_literacy = MediaLiteracy.LOW
 
         self.vocality = {}
         self.followers = []
@@ -151,6 +155,7 @@ class BaseAgent(Agent):
             update = rescaled_social_impact * update_elasticity
             updates[topic] += update
 
+            # TODO: delete if unnecessary
             # # Validation
             # if self.unique_id == 0:
             #     print(f'prev_belief: {prev_belief} \n'
@@ -339,11 +344,14 @@ class NormalUser(BaseAgent):
     """ NormalUser Agent """
 
     def __init__(self, unique_id, model):
-
+        """
+        :param unique_id: int
+        :param model: MisinfoPy
+        """
         super().__init__(unique_id, model)
 
         self.vocality = {'mu': 1, 'sigma': 0.7}  # This is used to sample nr of posts
-        self.media_literacy = MediaLiteracy.LOW  # MediaLiteracy.get_random()  # {LOW, HIGH}
+        self.media_literacy = MediaLiteracy.get_random()  # {LOW, HIGH}
 
     def init_beliefs(self):
         """
@@ -383,7 +391,7 @@ class NormalUser(BaseAgent):
         :param post: Post
         :return: boolean, whether the post is judged as true or false
         """
-
+        # TODO: delete if unnecessary or put into the documentation string
         # A post is only judged as NOT truthful if:
         #       - the post's factcheck_result is false
         #   AND
@@ -428,7 +436,6 @@ class Disinformer(BaseAgent):
         super().__init__(unique_id, model)
 
         self.vocality = {'mu': 10, 'sigma': 0.7}  # This is used to sample nr of posts
-        self.media_literacy = MediaLiteracy.LOW
 
     def init_beliefs(self):
         """

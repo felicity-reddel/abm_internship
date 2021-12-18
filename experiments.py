@@ -1,17 +1,20 @@
 import itertools
 import os
-
 import pandas as pd
-from Model import MisinfoModel  # , draw_graph
-from Visualization import *
-from Agents import *
+from misinfo_model import MisinfoPy
+from agents import *
 import time
 
 
-def calculate_avg_belief(model):
+def calculate_avg_belief(misinfo_model):
+    """
+    # TODO: add description of this function
+    :param misinfo_model: MisinfoPy
+    :return: avg_belief: float
+    """
     topic_name = str(Topic.VAX)
     beliefs = []
-    for agent in model.schedule.agents:
+    for agent in misinfo_model.schedule.agents:
         agent_belief_on_topic = agent.beliefs[topic_name]
         beliefs.append(agent_belief_on_topic)
 
@@ -20,10 +23,16 @@ def calculate_avg_belief(model):
     return avg_belief
 
 
-def calculate_percentage_agents_above_threshold(model, threshold):
-    agent_beliefs = [a.beliefs[str(Topic.VAX)] for a in model.schedule.agents]
+def calculate_percentage_agents_above_threshold(misinfo_model, threshold):
+    """
+    # TODO: add description of this function
+    :param misinfo_model: MisinfoPy
+    :param threshold:
+    :return:
+    """
+    agent_beliefs = [a.beliefs[str(Topic.VAX)] for a in misinfo_model.schedule.agents]
     n_above = sum([1 for a_belief in agent_beliefs if a_belief >= threshold])
-    percentage_above = n_above / len(model.schedule.agents)
+    percentage_above = n_above / len(misinfo_model.schedule.agents)
     return percentage_above
 
 
@@ -34,6 +43,7 @@ if __name__ == '__main__':
     max_run_length = 60
     n_replications = 12
 
+    # TODO: Clean up here
     # Scenarios = different agent_ratios
     scenarios = [{NormalUser.__name__: 0.99, Disinformer.__name__: 0.01}]  # ,
     # {NormalUser.__name__: 0.95, Disinformer.__name__: 0.05},
@@ -42,8 +52,8 @@ if __name__ == '__main__':
 
     # Policies = combinations of intervention values
     # media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM),
-                                          # (0.1, SelectAgentsBy.RANDOM),
-                                          # (0.25, SelectAgentsBy.RANDOM)]  # , (0.9, SelectAgentsBy.RANDOM)]
+    #                                       (0.1, SelectAgentsBy.RANDOM),
+    #                                       (0.25, SelectAgentsBy.RANDOM)]  # , (0.9, SelectAgentsBy.RANDOM)]
     # ranking_intervention_values = [True, False]
 
     # Validation
@@ -75,11 +85,11 @@ if __name__ == '__main__':
 
             for replication in range(n_replications):
                 # Set up the model
-                model = MisinfoModel(n_agents=n_agents,
-                                     n_edges=n_edges,
-                                     agent_ratio=scenario,
-                                     media_literacy_intervention=media_literacy_intervention,
-                                     ranking_intervention=ranking_intervention)
+                model = MisinfoPy(n_agents=n_agents,
+                                  n_edges=n_edges,
+                                  agent_ratio=scenario,
+                                  media_literacy_intervention=media_literacy_intervention,
+                                  ranking_intervention=ranking_intervention)
 
                 # Save start data
                 agents_belief_before = [agent.beliefs[str(Topic.VAX)] for agent in model.schedule.agents]
@@ -109,6 +119,7 @@ if __name__ == '__main__':
         directory = os.getcwd()
         path = directory + '/results/'
 
+        # TODO: Clean up here
         # file_name = "belief_distributions_before_after.csv"
         # file_name = "belief_distr_" + str(scenario) + ".csv"
         # file_name = "validation_media_literacy_intervention.csv"

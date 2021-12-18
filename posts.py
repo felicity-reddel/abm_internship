@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 from scipy.stats import skewnorm
-from Enums import *
+from enums import *
 
 
 class Post:
@@ -48,6 +48,7 @@ class Post:
                 value = random.randint(0, 100)
             else:
                 current_belief = based_on_agent.beliefs[topic]
+                # TODO: delete probably
                 # adjusted_skew = adjust_skew(current_belief, skew)
                 # adjusted_skew = 0  # --> normal distribution, no skew.
                 # value = skewnorm.rvs(a=adjusted_skew, loc=current_belief)
@@ -109,6 +110,7 @@ class Post:
         return adjusted_visibility
 
 
+# TODO: delete probably
 def adjust_skew(current_belief, skew):
     """
     Adjusts the skew for the skewed normal distribution. --> skewed towards more extreme

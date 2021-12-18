@@ -5,8 +5,8 @@ from numpy import interp
 from mesa.visualization.modules import ChartModule, NetworkModule
 from mesa.visualization.ModularVisualization import ModularServer
 
-from Posts import *
-from Agents import *
+from posts import *
+from agents import *
 
 
 def get_node_color(agent):
@@ -58,7 +58,7 @@ def show_visualization(model,
                        ranking_intervention=False):
     """
     Internal function to show the visualization.
-    :param model:       MisinfoModel
+    :param model:       MisinfoPy
     :param n_agents:    int
     :param n_edges:     int
     :param agent_ratio: dict {user_type: percentage},

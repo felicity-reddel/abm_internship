@@ -1,6 +1,6 @@
-from Model import MisinfoModel  # , draw_graph
-from Visualization import *
-from Agents import *
+from misinfo_model import MisinfoPy  # , draw_graph
+from visualization import *
+from agents import *
 import time
 
 
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     if visualize:
 
         # Only needs the line below. Runs model in the browser.
-        show_visualization(MisinfoModel,
+        show_visualization(MisinfoPy,
                            n_agents,
                            n_edges,
                            agent_ratio,
@@ -28,11 +28,11 @@ if __name__ == '__main__':
 
         max_run_length = 3
 
-        model = MisinfoModel(n_agents=n_agents,
-                             n_edges=n_edges,
-                             agent_ratio=agent_ratio,
-                             media_literacy_intervention=media_literacy_intervention,
-                             ranking_intervention=ranking_intervention)
+        model = MisinfoPy(n_agents=n_agents,
+                          n_edges=n_edges,
+                          agent_ratio=agent_ratio,
+                          media_literacy_intervention=media_literacy_intervention,
+                          ranking_intervention=ranking_intervention)
 
         print(f"Starting")
         start_time = time.time()

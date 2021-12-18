@@ -4,22 +4,28 @@ from mesa.time import StagedActivation
 from mesa.space import NetworkGrid
 import networkx as nx
 
-from Agents import *
-from Enums import *
+from agents import *
+from enums import *
 
 import numpy as np
 import math
 from matplotlib import pyplot as plt
 
 
-class MisinfoModel(Model):
+class MisinfoPy(Model):
     """Simple model with n agents."""
 
-    def __init__(self, n_agents, n_edges=2, agent_ratio={NormalUser.__name__: 0.9, Disinformer.__name__: 0.1},
+    def __init__(self,
+                 n_agents=1000,
+                 n_edges=2,
+                 agent_ratio=None,
                  media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
                  ranking_intervention=False):
         """
-        Initializes the MisinfoModel
+        Initializes the MisinfoPy
+        TODO: add parameter info
+        :param agent_ratio:
+        :param ranking_intervention:
         :param n_agents: int, how many agents the model should have
         :param n_edges: int, with how many edges gets attached to the already built network
         :param media_literacy_intervention: tuple(float, SelectAgentsBy)
@@ -30,6 +36,10 @@ class MisinfoModel(Model):
                                 If 1.0: everybody is empowered by it.
         """
         super().__init__()
+
+        if agent_ratio is None:
+            agent_ratio = {NormalUser.__name__: 0.9, Disinformer.__name__: 0.1}
+
         self.n_agents = n_agents
         self.schedule = StagedActivation(self, stage_list=["share_post_stage", "update_beliefs_stage"])
         self.G = random_graph(n_nodes=n_agents, m=n_edges)  # n_nodes = n_agents, exactly 1 agent per node
@@ -43,6 +53,7 @@ class MisinfoModel(Model):
         self.apply_media_literacy_intervention(media_literacy_intervention)
         self.ranking_intervention = ranking_intervention
 
+        # TODO: delete unnecessary elements
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,
             # "Belief Category Sizes": self.get_vax_category_sizes})
@@ -94,29 +105,33 @@ class MisinfoModel(Model):
     # –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
     def init_agents(self, agent_ratio):
-        """Initializes the agents."""
+        """Initializes the agents.
+        TODO: add parameter info
+        :param agent_ratio:
+        """
 
         # Saving scenario
         types = []
         percentages = []
-        for type, percentage in agent_ratio.items():
-            types.append(type)
+        for agent_type, percentage in agent_ratio.items():
+            types.append(agent_type)
             percentages.append(percentage)
 
         # Create agents & add them to the scheduler
         for i in range(self.n_agents):
 
             # Pick which type should be added
-            type = random.choices(population=types, weights=percentages, k=1)[0]
+            agent_type = random.choices(population=types, weights=percentages, k=1)[0]
 
             # Add agent of that type
-            if type is NormalUser.__name__:
+            if agent_type is NormalUser.__name__:
                 a = NormalUser(i, self)
                 self.schedule.add(a)
-            elif type is Disinformer.__name__:
+            elif agent_type is Disinformer.__name__:
                 a = Disinformer(i, self)
                 self.schedule.add(a)
 
+        # TODO: Consider deleting the next lines
         disinformers = [agent for agent in self.schedule.agents if isinstance(agent, Disinformer)]
         normal_users = [agent for agent in self.schedule.agents if isinstance(agent, NormalUser)]
         # print(f'disinformers: {len(disinformers)} \n'
@@ -150,6 +165,7 @@ class MisinfoModel(Model):
             n_following_list.append(len(agent.following))
             n_followers_list.append(len(agent.followers))
 
+            # TODO: delete prints
             # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
             # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
 
