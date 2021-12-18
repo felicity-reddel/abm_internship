@@ -23,9 +23,8 @@ class MisinfoPy(Model):
                  ranking_intervention=False):
         """
         Initializes the MisinfoPy
-        TODO: add parameter info
-        :param agent_ratio:
-        :param ranking_intervention:
+        :param agent_ratio: dictionary {String: float}
+        :param ranking_intervention: boolean
         :param n_agents: int, how many agents the model should have
         :param n_edges: int, with how many edges gets attached to the already built network
         :param media_literacy_intervention: tuple(float, SelectAgentsBy)
@@ -53,17 +52,12 @@ class MisinfoPy(Model):
         self.apply_media_literacy_intervention(media_literacy_intervention)
         self.ranking_intervention = ranking_intervention
 
-        # TODO: delete unnecessary elements
         self.data_collector = DataCollector(model_reporters={
             "Avg Vax-Belief": self.get_avg_vax_belief,
-            # "Belief Category Sizes": self.get_vax_category_sizes})
-            # "Above Vax-Threshold (>=50.0)": self.get_above_vax_threshold,
-            # "Below Vax-Threshold (<50.0)": self.get_below_vax_threshold,
             "Avg Vax-Belief above threshold": self.get_avg_above_vax_threshold,
             "Avg Vax-Belief below threshold": self.get_avg_below_vax_threshold})
 
         # DataCollector2: follow individual agents
-        # Hard-coded because programmatic attempt didn't work out. (see Trello)
         self.data_collector2 = DataCollector(model_reporters={
             f"Agent 0": self.get_vax_belief_0,
             f"Agent 1": self.get_vax_belief_10,
@@ -83,15 +77,13 @@ class MisinfoPy(Model):
 
         bins = np.linspace(math.ceil(min(data)),
                            math.floor(max(data)),
-                           40)  # fixed number of bins
+                           40)  # a fixed number of bins
 
         plt.xlim([min(data) - 5, max(data) + 5])
 
         plt.hist(data, bins=bins, alpha=0.5)
-        # plt.title(f'max followers: {max(data)}')
         plt.xlabel(f'Number of followers (highest: {max(data)})')
         plt.ylabel('Agent count')
-
         plt.show()
 
     def step(self):
@@ -106,8 +98,7 @@ class MisinfoPy(Model):
 
     def init_agents(self, agent_ratio):
         """Initializes the agents.
-        TODO: add parameter info
-        :param agent_ratio:
+        :param agent_ratio: dictionary, {String: float}
         """
 
         # Saving scenario
@@ -131,11 +122,6 @@ class MisinfoPy(Model):
                 a = Disinformer(i, self)
                 self.schedule.add(a)
 
-        # TODO: Consider deleting the next lines
-        disinformers = [agent for agent in self.schedule.agents if isinstance(agent, Disinformer)]
-        normal_users = [agent for agent in self.schedule.agents if isinstance(agent, NormalUser)]
-        # print(f'disinformers: {len(disinformers)} \n'
-        #       f'normal_users: {len(normal_users)} \n')
         # Place each agent in its node. (& save node_position into agent)
         for node in self.G.nodes:  # each node is just an integer (i.e., a node_id)
             agent = self.schedule.agents[node]
@@ -164,10 +150,6 @@ class MisinfoPy(Model):
             # Gather number of followers/following to this agent
             n_following_list.append(len(agent.following))
             n_followers_list.append(len(agent.followers))
-
-            # TODO: delete prints
-            # print(f"agent {agent.unique_id} predecessors: {[agent.unique_id for agent in predecessors]}")
-            # print(f"agent {agent.unique_id} successors: {[agent.unique_id for agent in predecessors]}")
 
         # Gather boundaries of ranges (n_followers & n_following)
         min_n_following = min(n_following_list)
@@ -321,10 +303,6 @@ class MisinfoPy(Model):
         For the DataCollector.
         :return: list (of floats)
         """
-
-        # get_vax_beliefs = []
-        # for agent in self.schedule.agents:
-        #     get_vax_beliefs += agent.beliefs[Topic.VAX]
         topic = str(Topic.VAX)
         vax_beliefs = [agent.beliefs[topic] for agent in self.schedule.agents]
 
@@ -345,7 +323,6 @@ class MisinfoPy(Model):
 
         return vax_beliefs
 
-    # Hard-coded because programmatic attempt didn't work out. (see Trello)
     def get_vax_belief_0(self, dummy) -> float:
         """
         Returns the belief of agent 0 at current tick.

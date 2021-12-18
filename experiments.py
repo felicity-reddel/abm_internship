@@ -8,7 +8,7 @@ import time
 
 def calculate_avg_belief(misinfo_model):
     """
-    # TODO: add description of this function
+    Calculates the average belief over all agents.
     :param misinfo_model: MisinfoPy
     :return: avg_belief: float
     """
@@ -25,10 +25,10 @@ def calculate_avg_belief(misinfo_model):
 
 def calculate_percentage_agents_above_threshold(misinfo_model, threshold):
     """
-    # TODO: add description of this function
+    Calculates the percentage of agents that is above the specified threshold.
     :param misinfo_model: MisinfoPy
-    :param threshold:
-    :return:
+    :param threshold: float
+    :return: float
     """
     agent_beliefs = [a.beliefs[str(Topic.VAX)] for a in misinfo_model.schedule.agents]
     n_above = sum([1 for a_belief in agent_beliefs if a_belief >= threshold])
@@ -38,27 +38,22 @@ def calculate_percentage_agents_above_threshold(misinfo_model, threshold):
 
 if __name__ == '__main__':
 
-    n_agents = 5000
+    n_agents = 1000
     n_edges = 3
     max_run_length = 60
     n_replications = 12
 
-    # TODO: Clean up here
-    # Scenarios = different agent_ratios
-    scenarios = [{NormalUser.__name__: 0.99, Disinformer.__name__: 0.01}]  # ,
-    # {NormalUser.__name__: 0.95, Disinformer.__name__: 0.05},
-    # {NormalUser.__name__: 0.8, Disinformer.__name__: 0.2},
-    # {NormalUser.__name__: 0.25, Disinformer.__name__: 0.75}]
+    # Scenarios are different agent_ratios
+    scenarios = [{NormalUser.__name__: 0.99, Disinformer.__name__: 0.01},
+                 {NormalUser.__name__: 0.95, Disinformer.__name__: 0.05},
+                 {NormalUser.__name__: 0.8, Disinformer.__name__: 0.2},
+                 {NormalUser.__name__: 0.25, Disinformer.__name__: 0.75}]
 
-    # Policies = combinations of intervention values
-    # media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM),
-    #                                       (0.1, SelectAgentsBy.RANDOM),
-    #                                       (0.25, SelectAgentsBy.RANDOM)]  # , (0.9, SelectAgentsBy.RANDOM)]
-    # ranking_intervention_values = [True, False]
-
-    # Validation
-    media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM)]  # Validation
-    ranking_intervention_values = [False]  # Validation
+    # Policies are combinations of intervention values
+    media_literacy_intervention_values = [(0.0, SelectAgentsBy.RANDOM),
+                                          (0.1, SelectAgentsBy.RANDOM),
+                                          (0.25, SelectAgentsBy.RANDOM)]
+    ranking_intervention_values = [True, False]
 
     policies = list(itertools.product(media_literacy_intervention_values, ranking_intervention_values))
 
@@ -119,19 +114,14 @@ if __name__ == '__main__':
         directory = os.getcwd()
         path = directory + '/results/'
 
-        # TODO: Clean up here
-        # file_name = "belief_distributions_before_after.csv"
-        # file_name = "belief_distr_" + str(scenario) + ".csv"
-        # file_name = "validation_media_literacy_intervention.csv"
-        file_name = "validation_n_agents.csv"
+        file_name = "belief_distr_" + str(scenario) + ".csv"
         data.to_csv(path + file_name)
-
-        # # Printing
-        # print(f"scenario {i} done")
 
     # Printing
     end_time = time.localtime(time.time())
     human_understandable_time = time.strftime('%Y-%m-%d %H:%M:%S', end_time)
     print(f"Ending at time: {human_understandable_time}")
     run_time = round(time.time() - start_time_seconds, 2)
-    print(f"\nWith {max_run_length} steps, runtime is {run_time} seconds --> roughly {round(run_time/60/60, 2)} hours")
+    print(
+        f"\nWith {max_run_length} steps, runtime is {run_time} seconds "
+        f"--> roughly {round(run_time / 60 / 60, 2)} hours")

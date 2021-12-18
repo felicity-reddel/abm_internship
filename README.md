@@ -31,9 +31,8 @@ This project has been developed within an internship at the **TPM AI Lab** at th
 ├── images
 ├── notebooks
 │   ├── main.ipynb                        
-│   ├── Visualization_KPI_1.ipynb         # Visualize KPI 1
-│   ├── Visualization_KPI_2.ipynb         # Visualize KPI 2
-│   └── Viz_Belief_Distributions.ipynb    # Visualize belief distributions (before and after)
+│   ├── viz_avg_update.ipynb              # Visualize the average belief update
+│   └── viz_belief_distributions.ipynb    # Visualize belief distributions (before and after)
 ├── results                               # Contains results (csv + png)
 │   └── images                            # Contains figures as png files
 ├── agents.py                             # Contains different agent types

@@ -5,7 +5,6 @@ from numpy import interp
 from mesa.visualization.modules import ChartModule, NetworkModule
 from mesa.visualization.ModularVisualization import ModularServer
 
-from posts import *
 from agents import *
 
 
@@ -53,7 +52,7 @@ def get_edge_width(weight=1, weight_borders=(0, 100)):
 def show_visualization(model,
                        n_agents=100,
                        n_edges=3,
-                       agent_ratio={NormalUser.__name__: 0.9, Disinformer.__name__: 0.1},
+                       agent_ratio=None,
                        media_literacy_intervention=(0.0, SelectAgentsBy.RANDOM),
                        ranking_intervention=False):
     """
@@ -61,10 +60,13 @@ def show_visualization(model,
     :param model:       MisinfoPy
     :param n_agents:    int
     :param n_edges:     int
-    :param agent_ratio: dict {user_type: percentage},
+    :param agent_ratio: dict {user_type: percentage}
     :param media_literacy_intervention:  tuple: (percentage_reached, how_to_select_agents)  (float, Enum)
     :param ranking_intervention:         boolean
     """
+
+    if agent_ratio is None:
+        agent_ratio = {NormalUser.__name__: 0.9, Disinformer.__name__: 0.1}
 
     def network_portrayal(G):
         """
@@ -74,12 +76,10 @@ def show_visualization(model,
                              'edges': [portrayal_details]}
         """
         # The model ensures there is always 1 agent per node
-
         portrayal = dict()
         portrayal['nodes'] = [{"shape": "circle",
                                "color": f'rgb{get_node_color(agent)}',
                                "size": 5,
-                               # "tooltip": f"belief: {round(agent.beliefs[Topic.VAX])}",
                                "tooltip": f"{round(agent.unique_id)}"
                                }
                               for (id, agent) in G.nodes.data("agent")]
@@ -91,8 +91,6 @@ def show_visualization(model,
                                # to adjust line-width based on edge-weight, use instead:
                                # 'width': get_edge_width(G.edges[source, target, key]['weight']),
                                'directed': True
-                               # 'directed' should work, but doesn't change anything:
-                               # https://github.com/projectmesa/mesa/issues/667
                                }
                               for (source, target, key) in G.edges]
 
@@ -100,13 +98,11 @@ def show_visualization(model,
 
     network = NetworkModule(network_portrayal, 500, 500, library='d3')
     chart_avg_belief = ChartModule([{"Label": "Avg Vax-Belief", "Color": "blue"},
-                                    # {"Label": "Above Vax-Threshold (>=50.0)", "Color": "green"},
-                                    # {"Label": "Below Vax-Threshold (<50.0)", "Color": "red"},
                                     {"Label": "Avg Vax-Belief above threshold", "Color": "green"},
                                     {"Label": "Avg Vax-Belief below threshold", "Color": "red"}],
                                    data_collector_name="data_collector")
 
-    chart_indiv_belief = ChartModule([{"Label": "Agent 0", "Color": "#FFCA03"},     # yellow
+    chart_indiv_belief = ChartModule([{"Label": "Agent 0", "Color": "#FFCA03"},    # yellow
                                       {"Label": "Agent 1", "Color": "#FF9300"},    # orange
                                       {"Label": "Agent 2", "Color": "#F90716"},    # red
                                       {"Label": "Agent 3", "Color": "#FF00E4"},    # pink

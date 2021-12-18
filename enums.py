@@ -39,7 +39,6 @@ class FactCheckResult(Enum):
 
     FALSE = 0.5
     TRUE = 1
-
     # MISLEADING = 0.75
 
     def __eq__(self, o: object) -> bool:
@@ -130,7 +129,6 @@ class SelectAgentsBy(Enum):
     Easily extendable to e.g., pick agents based on an agent-characteristic (e.g., age, if age is an agent attribute).
     """
     RANDOM = 0
-
     # HIGH_AGE = 1
     # LOW_AGE = 2
 

@@ -132,21 +132,16 @@ class BaseAgent(Agent):
             social_impact = strength * immediacy * n_sources  # [0,100] * [0,100] * [0,100] --> [0,100^3]
 
             # Rescale
-            max_increase = 0
-            max_decrease = 0
             # downwards belief update
             if post_value < prev_belief:
                 max_decrease = post_value - prev_belief
-                # social_impact *= -1  # to actually decrease belief
                 rescaled_social_impact = social_impact / 1e6 * max_decrease
-                # upwards belief update
+            # upwards belief update
             elif post_value > prev_belief:
                 max_increase = post_value - prev_belief
                 rescaled_social_impact = social_impact / 1e6 * max_increase
             else:
                 rescaled_social_impact = 0
-
-            # rescaled_social_impact = rescale(old_value=social_impact, new_domain=(max_decrease, max_increase))
 
             # Calculate update elasticity
             update_elasticity = self.calculate_update_elasticity(prev_belief)
@@ -154,16 +149,6 @@ class BaseAgent(Agent):
             # Calculate final update for belief on topic
             update = rescaled_social_impact * update_elasticity
             updates[topic] += update
-
-            # TODO: delete if unnecessary
-            # # Validation
-            # if self.unique_id == 0:
-            #     print(f'prev_belief: {prev_belief} \n'
-            #           f'post value: {post_value} \n'
-            #           f'max decrease: {max_decrease} \n'
-            #           f'update_elasticity: {update_elasticity} \n'
-            #           f'rescaled social impact: {rescaled_social_impact} \n'
-            #           f'update: {update} \n')
 
         return updates
 
@@ -391,11 +376,6 @@ class NormalUser(BaseAgent):
         :param post: Post
         :return: boolean, whether the post is judged as true or false
         """
-        # TODO: delete if unnecessary or put into the documentation string
-        # A post is only judged as NOT truthful if:
-        #       - the post's factcheck_result is false
-        #   AND
-        #       - the agent's media literacy is high
         judged_truthfulness = True
         if self.media_literacy.__eq__(MediaLiteracy.HIGH) and post.factcheck_result.__eq__(FactCheckResult.FALSE):
             judged_truthfulness = False
