@@ -28,8 +28,9 @@ This project has been developed within an internship at the **TPM AI Lab** at th
 
 ```
 ./internship/
+├── images
 ├── notebooks
-│   ├── main.ipynb                        #  
+│   ├── main.ipynb                        
 │   ├── Visualization_KPI_1.ipynb         # Visualize KPI 1
 │   ├── Visualization_KPI_2.ipynb         # Visualize KPI 2
 │   └── Viz_Belief_Distributions.ipynb    # Visualize belief distributions (before and after)
